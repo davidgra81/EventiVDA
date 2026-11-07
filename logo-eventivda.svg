@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" fill="none">
+  <defs>
+    <linearGradient id="vdaBg" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#141824"/>
+      <stop offset="55%" stop-color="#1e1b2e"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </linearGradient>
+    <linearGradient id="vdaRed" x1="20" y1="15" x2="100" y2="105" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff4d4d"/>
+      <stop offset="100%" stop-color="#c81e1e"/>
+    </linearGradient>
+    <linearGradient id="vdaSnow" x1="60" y1="28" x2="60" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="vdaGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="glow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#e62e2d" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Scudo / Badge Esagonale Arrotondato Valdostano -->
+  <rect x="6" y="6" width="108" height="108" rx="28" fill="url(#vdaBg)" stroke="url(#vdaRed)" stroke-width="4"/>
+  
+  <!-- Banda diagonale Rosso/Nero stile stemma VdA -->
+  <path d="M6 34 C6 18 18 6 34 6 L114 86 C114 102 102 114 86 114 Z" fill="url(#vdaRed)" opacity="0.22"/>
+
+  <!-- Stella / Sole degli Eventi Alpini -->
+  <circle cx="85" cy="31" r="9" fill="url(#vdaGold)" filter="url(#glow)"/>
+  <path d="M85 17 L85 20 M85 42 L85 45 M71 31 L74 31 M96 31 L99 31" stroke="#fde047" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- Silhouette Vette Alpine (Monte Bianco & Cervino) -->
+  <path d="M16 90 L42 42 L58 66 L74 34 L104 90 Z" fill="url(#vdaSnow)" filter="url(#glow)"/>
+  <path d="M42 42 L58 66 L49 66 L42 54 L33 68 L26 68 Z" fill="#ffffff"/>
+  <path d="M74 34 L90 64 L81 62 L74 49 L65 65 L58 66 Z" fill="#f8fafc"/>
+
+  <!-- Onda / Sentiero Curvo Rosso alla base delle montagne -->
+  <path d="M16 90 Q45 78 65 88 T104 86 L104 95 C104 100 98 102 92 102 L28 102 C22 102 16 100 16 95 Z" fill="url(#vdaRed)"/>
+
+  <!-- Pin Evento Centrale -->
+  <circle cx="42" cy="32" r="5" fill="#ff4d4d" stroke="#ffffff" stroke-width="2"/>
+</svg>

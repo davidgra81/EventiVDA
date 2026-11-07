@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>EventiVDA | Eventi, Rassegne e Attività in Valle d'Aosta</title>
+  <meta name="description" content="EventiVDA — Il portale degli eventi in Valle d'Aosta. Ricerca per comune, valle, categoria, giorno/sera e Saison Culturelle.">
+  <link rel="icon" type="image/svg+xml" href="logo-eventivda.svg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="style.css?v=9.0">
+</head>
+<body>
+
+<!-- HEADER NAVBAR -->
+<header>
+  <div class="nav-container">
+    <a href="#" class="logo" onclick="navTo('eventi')">
+      <img src="logo-eventivda.svg" alt="EventiVDA Logo" class="logo-svg-img">
+      <div class="logo-brand-text">
+        <span class="logo-main-name">Eventi<span class="logo-vda-accent">VDA</span></span>
+        <span class="logo-sub-tag">Valle d'Aosta</span>
+      </div>
+    </a>
+    <nav>
+      <ul>
+        <li><span class="nav-link active" data-target="eventi" onclick="navTo('eventi')"><i class="fas fa-calendar-alt"></i> Eventi</span></li>
+        <li><span class="nav-link" data-target="servizi" onclick="navTo('servizi')"><i class="fas fa-magic"></i> Servizi & Location</span></li>
+        <li><span class="nav-link" data-target="admin" onclick="navTo('admin')"><i class="fas fa-lock"></i> Area Admin</span></li>
+        <li><button class="theme-toggle" id="themeToggle" title="Cambia tema"><i class="fas fa-sun" id="themeIcon"></i></button></li>
+        <li><button class="btn-cta" id="btnSponsorEvent"><i class="fas fa-bullhorn"></i> Sponsorizza Evento</button></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- TOP DASHBOARD: Filtri (sx) + Mappa Comuni VdA Squadrata (dx) -->
+<div class="top-dashboard" id="topDashboard">
+
+  <!-- PANNELLO FILTRI VERTICALE RESTYLING -->
+  <div class="search-panel">
+    <div class="search-panel-header">
+      <h3><i class="fas fa-compass"></i> Cosa vuoi fare in Valle?</h3>
+      <span class="active-comune-badge hidden" id="activeComuneBadge">
+        <i class="fas fa-map-pin"></i> <span id="activeComuneName">Aosta</span>
+        <button type="button" onclick="App.selectMapComune('')" title="Rimuovi filtro comune">&times;</button>
+      </span>
+    </div>
+
+    <!-- Parola chiave -->
+    <div class="filter-group">
+      <label for="eventSearchInput">Ricerca rapida</label>
+      <div class="filter-input-wrap">
+        <i class="fas fa-search field-icon"></i>
+        <input type="text" id="eventSearchInput" placeholder="Titolo, attività, comune, tag...">
+      </div>
+    </div>
+
+    <!-- Rassegne & Grandi Eventi (inclusa Saison Culturelle) -->
+    <div class="filter-group">
+      <label for="eventRassegnaFilter">🎭 Rassegna / Festival</label>
+      <div class="filter-input-wrap">
+        <i class="fas fa-theater-masks field-icon"></i>
+        <select id="eventRassegnaFilter">
+          <option value="">Tutte le rassegne ed eventi</option>
+          <option value="saison_culturelle">🎭 Saison Culturelle VdA</option>
+          <option value="marche_vert_noel">🎄 Marché Vert Noël & Mercatini</option>
+          <option value="forte_di_bard">🏰 Eventi & Mostre Forte di Bard</option>
+          <option value="fiera_sant_orso">🪵 Fiera di Sant'Orso — Millenaria</option>
+          <option value="grandi_eventi_montagna">🏔️ Grandi Eventi Sport & Montagna</option>
+        </select>
+        <i class="fas fa-chevron-down select-chevron"></i>
+      </div>
+      <div class="rassegna-quick-chips" id="rassegnaQuickChips">
+        <button type="button" class="rassegna-chip" data-rassegna="saison_culturelle" onclick="App.toggleRassegnaChip('saison_culturelle')">🎭 Saison Culturelle</button>
+        <button type="button" class="rassegna-chip" data-rassegna="marche_vert_noel" onclick="App.toggleRassegnaChip('marche_vert_noel')">🎄 Marché Vert Noël</button>
+        <button type="button" class="rassegna-chip" data-rassegna="forte_di_bard" onclick="App.toggleRassegnaChip('forte_di_bard')">🏰 Forte di Bard</button>
+      </div>
+    </div>
+
+    <!-- Zona + Categoria -->
+    <div class="filter-row-compact">
+      <div class="filter-group">
+        <label for="eventLocationFilter">Zona / Valle</label>
+        <div class="filter-input-wrap">
+          <i class="fas fa-map-marker-alt field-icon"></i>
+          <select id="eventLocationFilter">
+            <option value="">Tutta la Valle</option>
+            <option value="aosta">🏛️ Aosta Città</option>
+            <option value="alta">🏔️ Alta Valle</option>
+            <option value="media">🦌 Media Valle</option>
+            <option value="bassa">🏰 Bassa Valle</option>
+          </select>
+          <i class="fas fa-chevron-down select-chevron"></i>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="eventCategoryFilter">Categoria</label>
+        <div class="filter-input-wrap">
+          <i class="fas fa-tags field-icon"></i>
+          <select id="eventCategoryFilter">
+            <option value="">Tutte le categorie</option>
+            <option value="culture">🏛️ Cultura & Teatro</option>
+            <option value="music">🎵 Musica & Concerti</option>
+            <option value="sport">🎿 Sport & Montagna</option>
+            <option value="food_wine">🍷 Enogastronomia</option>
+            <option value="nature">🌲 Natura & Trekking</option>
+            <option value="markets">🛍️ Fiere & Mercatini</option>
+          </select>
+          <i class="fas fa-chevron-down select-chevron"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fascia Oraria (Giorno / Sera) -->
+    <div class="filter-group">
+      <label for="eventTimeSlotFilter">Fascia Oraria (Giorno / Sera)</label>
+      <div class="filter-input-wrap">
+        <i class="fas fa-clock field-icon"></i>
+        <select id="eventTimeSlotFilter">
+          <option value="">🕒 Tutti gli orari (Giorno & Sera)</option>
+          <option value="day">☀️ Diurno (Mattina / Pomeriggio)</option>
+          <option value="evening">🌙 Serale (Sera / Notte)</option>
+        </select>
+        <i class="fas fa-chevron-down select-chevron"></i>
+      </div>
+    </div>
+
+    <!-- Costo + Prenotazione -->
+    <div class="filter-row-compact">
+      <div class="filter-group">
+        <label for="eventCostFilter">Costo</label>
+        <div class="filter-input-wrap">
+          <i class="fas fa-ticket-alt field-icon"></i>
+          <select id="eventCostFilter">
+            <option value="">Tutti i costi</option>
+            <option value="free">🟢 Gratuito</option>
+            <option value="paid">🎟️ A Pagamento</option>
+          </select>
+          <i class="fas fa-chevron-down select-chevron"></i>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="eventBookingFilter">Prenotazione</label>
+        <div class="filter-input-wrap">
+          <i class="fas fa-calendar-check field-icon"></i>
+          <select id="eventBookingFilter">
+            <option value="">Tutte le modalità</option>
+            <option value="none">⚡ Accesso Libero</option>
+            <option value="required">📋 Su Prenotazione</option>
+          </select>
+          <i class="fas fa-chevron-down select-chevron"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bambini & Famiglie -->
+    <div class="filter-group" style="margin-bottom: 0.55rem;">
+      <label class="filter-kids-row">
+        <input type="checkbox" id="eventChildrenFilter">
+        <span>👶 Adatto a bambini e famiglie</span>
+      </label>
+    </div>
+
+    <button class="btn-reset" onclick="resetFilters()"><i class="fas fa-rotate-left"></i> Reimposta tutti i filtri</button>
+  </div>
+
+  <!-- PANNELLO MAPPA DELLA VALLE D'AOSTA DIVISA PER COMUNI CON EVENTI SOPRA -->
+  <div class="map-panel">
+    <div class="map-panel-header">
+      <div class="map-title-group">
+        <i class="fas fa-map-location-dot" style="color: var(--accent-primary); font-size: 1rem;"></i>
+        <div>
+          <span class="map-main-title">Cartina Comuni della Valle d'Aosta</span>
+          <span class="map-sub-hint">Clicca su un Comune o una Valle per filtrare, o su un Pin per aprire l'evento</span>
+        </div>
+      </div>
+      <div class="map-zone-chips" id="mapZoneChips">
+        <button type="button" class="zone-chip active" data-zone="" onclick="App.selectMapZone('')">Tutta la VdA</button>
+        <button type="button" class="zone-chip zone-alta" data-zone="alta" onclick="App.selectMapZone('alta')">🏔️ Alta Valle</button>
+        <button type="button" class="zone-chip zone-aosta" data-zone="aosta" onclick="App.selectMapZone('aosta')">🏛️ Aosta</button>
+        <button type="button" class="zone-chip zone-media" data-zone="media" onclick="App.selectMapZone('media')">🦌 Media Valle</button>
+        <button type="button" class="zone-chip zone-bassa" data-zone="bassa" onclick="App.selectMapZone('bassa')">🏰 Bassa Valle</button>
+      </div>
+    </div>
+
+    <!-- Contenitore Più Squadrato per la Cartina dei 74 Comuni VdA -->
+    <div class="interactive-map-container" id="vdaMapSquareFrame">
+      <!-- Vista Principale: Cartina Illustrata Vettoriale della Valle d'Aosta Divisa nei 74 Comuni -->
+      <div id="vdaComuniMapWrap" class="vda-comuni-map-wrap">
+        <svg id="vdaComuniSvg" viewBox="0 0 960 629" preserveAspectRatio="xMidYMid meet"></svg>
+
+        <!-- Controlli Zoom & Modalità Mappa -->
+        <div class="vda-map-controls">
+          <button type="button" class="vda-map-ctrl-btn" onclick="App.zoomComuniMap(1.25)" title="Ingrandisci Mappa Comuni"><i class="fas fa-plus"></i></button>
+          <button type="button" class="vda-map-ctrl-btn" onclick="App.zoomComuniMap(0.8)" title="Riduci Mappa Comuni"><i class="fas fa-minus"></i></button>
+          <button type="button" class="vda-map-ctrl-btn" onclick="App.resetComuniMapZoom()" title="Centra tutta la Valle d'Aosta"><i class="fas fa-expand"></i></button>
+        </div>
+
+        <!-- Switch opzionale Mappa Comuni / Mappa Stradale -->
+        <div class="vda-map-mode-switch">
+          <button type="button" class="map-mode-pill active" id="btnModeComuni" onclick="App.switchMapMode('comuni')">🗺️ Mappa Comuni VdA</button>
+          <button type="button" class="map-mode-pill" id="btnModeStreet" onclick="App.switchMapMode('street')">🛰️ Mappa Stradale</button>
+        </div>
+
+        <!-- Tooltip Flottante Comune / Evento -->
+        <div id="vdaMapTooltip" class="vda-map-tooltip hidden"></div>
+      </div>
+
+      <!-- Vista Secondaria: Leaflet Stradale (nascosta di default) -->
+      <div id="vdaLeafletMap" class="hidden" style="width: 100%; height: 100%;"></div>
+    </div>
+
+    <!-- Legenda Categorie Cliccabile -->
+    <div class="map-legend" id="mapCategoryLegend">
+      <span style="font-size:0.7rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Filtra Pin Categoria:</span>
+      <button type="button" class="legend-item legend-btn active" data-cat="" onclick="App.selectMapCategory('')">Tutti</button>
+      <button type="button" class="legend-item legend-btn" data-cat="culture" onclick="App.selectMapCategory('culture')"><span class="legend-dot" style="background:#8b5cf6;"></span> Cultura & Teatro</button>
+      <button type="button" class="legend-item legend-btn" data-cat="music" onclick="App.selectMapCategory('music')"><span class="legend-dot" style="background:#ec4899;"></span> Musica</button>
+      <button type="button" class="legend-item legend-btn" data-cat="sport" onclick="App.selectMapCategory('sport')"><span class="legend-dot" style="background:#06b6d4;"></span> Sport</button>
+      <button type="button" class="legend-item legend-btn" data-cat="food_wine" onclick="App.selectMapCategory('food_wine')"><span class="legend-dot" style="background:#f97316;"></span> Enogastronomia</button>
+      <button type="button" class="legend-item legend-btn" data-cat="nature" onclick="App.selectMapCategory('nature')"><span class="legend-dot" style="background:#10b981;"></span> Natura</button>
+      <button type="button" class="legend-item legend-btn" data-cat="markets" onclick="App.selectMapCategory('markets')"><span class="legend-dot" style="background:#eab308;"></span> Fiere & Mercatini</button>
+    </div>
+  </div>
+</div>
+
+<!-- Barra Ricerca Temporale: Priorità 0-30 Giorni + Estensione Oltre 30 Giorni -->
+<div class="time-slider-bar" id="timeSliderBar">
+  <div class="time-slider-card" style="flex-direction:column;align-items:stretch;gap:0.65rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+      <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <span class="time-slider-label"><i class="far fa-calendar-check"></i> Quando:</span>
+        <div class="time-presets-group" id="timePresetsGroup">
+          <button type="button" class="time-preset-btn active" data-preset="30d" onclick="App.setTimePreset('30d')">🔥 Prossimi 30 Giorni</button>
+          <button type="button" class="time-preset-btn" data-preset="today" onclick="App.setTimePreset('today')">☀️ Oggi</button>
+          <button type="button" class="time-preset-btn" data-preset="tomorrow" onclick="App.setTimePreset('tomorrow')">🌤️ Domani</button>
+          <button type="button" class="time-preset-btn" data-preset="this_weekend" onclick="App.setTimePreset('this_weekend')">🎉 Questo Weekend</button>
+          <button type="button" class="time-preset-btn" data-preset="all_weekends" onclick="App.setTimePreset('all_weekends')">⛰️ Nei Weekend (Sab/Dom)</button>
+          <button type="button" class="time-preset-btn" data-preset="all" onclick="App.setTimePreset('all')">♾️ Anche Oltre 30gg (Tutti)</button>
+        </div>
+      </div>
+      <span class="time-selected-label" id="timeSelectedLabel">Prossimi 30 giorni</span>
+    </div>
+
+    <div class="range-slider-wrapper">
+      <div class="dual-range-container">
+        <div class="dual-range-track"></div>
+        <div class="slider-priority-zone-mark" style="left: 75%;" title="Priorità 30 Giorni"></div>
+        <div class="dual-range-fill" id="rangeSliderFill"></div>
+        <input type="range" id="rangeMin" class="range-input" min="0" max="40" value="0" step="1">
+        <input type="range" id="rangeMax" class="range-input" min="0" max="40" value="30" step="1">
+      </div>
+      <div class="range-month-labels">
+        <span>Oggi</span>
+        <span>+5g</span>
+        <span>+10g</span>
+        <span>+15g</span>
+        <span>+20g</span>
+        <span>+25g</span>
+        <span style="color:var(--accent-primary);font-weight:800;">🎯 +30g (Priorità)</span>
+        <span>+60g</span>
+        <span>Oltre / Tutti</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BANNER RIDIMENSIONATO (sobrio) -->
+<div class="business-banner-mini" id="bizBanner">
+  <div class="banner-mini-card">
+    <span><i class="fas fa-store" style="color: var(--accent-secondary);"></i> <strong>Organizzi feste o hai una saletta?</strong> Pubblicizza la tua attività e raggiungi chi cerca eventi in Valle d'Aosta.</span>
+    <button class="btn-banner-mini" id="btnSponsorBusiness"><i class="fas fa-plus"></i> Inserisci la tua Attività</button>
+  </div>
+</div>
+
+<!-- LAYOUT PRINCIPALE -->
+<main class="content-layout">
+
+  <div class="main-column">
+
+    <!-- SEZIONE EVENTI -->
+    <section id="eventsView" class="tab-section">
+      <div class="events-header-bar">
+        <h2 style="margin-bottom:0;border-bottom:none;padding-bottom:0;">
+          <span>Attività ed Eventi in Programma</span>
+          <span class="results-count" id="eventsResultsCount">0 eventi</span>
+        </h2>
+        <div class="events-view-controls">
+          <select id="eventSortSelect" class="sort-select" onchange="App.setEventsSort(this.value)" title="Ordina eventi">
+            <option value="date">📅 Data (Più vicini)</option>
+            <option value="relevance">⭐ Importanza & Sponsor</option>
+            <option value="location">📍 Comune (A-Z)</option>
+          </select>
+          <div class="view-mode-group">
+            <button type="button" class="view-mode-btn active" id="btnViewGrid" onclick="App.setEventsViewMode('grid')" title="Vista Griglia Card">
+              <i class="fas fa-th-large"></i> Card
+            </button>
+            <button type="button" class="view-mode-btn" id="btnViewList" onclick="App.setEventsViewMode('list')" title="Vista Elenco Compatto">
+              <i class="fas fa-list-ul"></i> Elenco
+            </button>
+            <button type="button" class="view-mode-btn" id="btnViewTimeline" onclick="App.setEventsViewMode('timeline')" title="Linea Temporale Dinamica a Bolle">
+              <i class="fas fa-circle-nodes"></i> Timeline Bolle
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="events-grid" id="eventsGrid"></div>
+    </section>
+
+    <!-- SEZIONE SERVIZI & LOCATION -->
+    <section id="servicesView" class="tab-section hidden">
+      <h2>
+        <span>Feste, Compleanni & Location</span>
+        <span class="results-count" id="servicesResultsCount">0 servizi</span>
+      </h2>
+      <div class="services-filter-bar">
+        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+          <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);">Tipo</label>
+          <select id="serviceTypeFilter">
+            <option value="">Tutti i servizi</option>
+            <option value="venue">Salette / Location</option>
+            <option value="entertainment">Animazione feste</option>
+            <option value="catering">Catering</option>
+            <option value="organizer">Organizzazione Feste</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+          <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);">Zona</label>
+          <select id="serviceLocationFilter">
+            <option value="">Tutte le zone</option>
+            <option value="aosta">Aosta Città</option>
+            <option value="alta">Alta Valle</option>
+            <option value="media">Media Valle</option>
+            <option value="bassa">Bassa Valle</option>
+          </select>
+        </div>
+      </div>
+      <div class="services-grid" id="servicesGrid"></div>
+    </section>
+
+    <!-- SEZIONE ADMIN (con login) -->
+    <section id="adminView" class="tab-section hidden">
+
+      <!-- LOGIN BOX (visibile se non autenticato) -->
+      <div id="adminLoginBox" class="login-box">
+        <div style="font-size:2.5rem; margin-bottom:0.75rem;">🔐</div>
+        <h2>Area Riservata</h2>
+        <p>Inserisci le tue credenziali per accedere al pannello di amministrazione.</p>
+        <div class="login-error" id="loginError">Credenziali non valide. Riprova.</div>
+        <div class="form-group" style="text-align:left;">
+          <label for="loginUsername">Username</label>
+          <input type="text" id="loginUsername" placeholder="admin1" autocomplete="username">
+        </div>
+        <div class="form-group" style="text-align:left;">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••" autocomplete="current-password">
+        </div>
+        <button class="btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> Accedi</button>
+      </div>
+
+      <!-- DASHBOARD ADMIN (visibile solo dopo login) -->
+      <div id="adminDashboardContent" class="hidden">
+        <div class="admin-info-bar">
+          <span><i class="fas fa-user-shield" style="color: var(--accent-primary);"></i> Accesso come: <strong id="adminLoggedUser">—</strong></span>
+          <button class="btn-logout" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Esci</button>
+        </div>
+
+        <!-- TAB INTERNE ADMIN -->
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-admin-panel="moderation">
+            <i class="fas fa-clipboard-check"></i> Moderazione
+            <span id="pendingBadge" style="background:var(--accent-primary);color:white;font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:10px;margin-left:0.35rem;"></span>
+          </button>
+          <button class="admin-tab" data-admin-panel="scraper">
+            <i class="fas fa-terminal"></i> Scraper & Fonti
+          </button>
+          <button class="admin-tab" data-admin-panel="users">
+            <i class="fas fa-users"></i> Gestione Utenti
+          </button>
+          <button class="admin-tab" data-admin-panel="sponsors">
+            <i class="fas fa-hand-holding-dollar"></i> Sponsor & Incassi
+          </button>
+          <button class="admin-tab" data-admin-panel="comuni">
+            <i class="fas fa-map-location-dot"></i> Comuni & Zone
+          </button>
+        </div>
+
+        <!-- PANNELLO MODERAZIONE -->
+        <div id="panelModeration" class="admin-panel active">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem;">
+            <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0;max-width:500px;">
+              Gli eventi estratti dallo scraper o in attesa di validazione sono elencati qui. Puoi inserire nuovi eventi, modificare, approvare o eliminare ciascun evento prima della pubblicazione pubblica.
+            </p>
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+              <button class="btn-cta" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);box-shadow:0 4px 14px rgba(37,99,235,0.3);" onclick="App.approveAllPending()"><i class="fas fa-check-double"></i> Approva Tutti in Attesa</button>
+              <button class="btn-cta" style="background:linear-gradient(135deg,var(--accent-secondary),#047857);box-shadow:0 4px 14px rgba(13,148,136,0.3);" onclick="App.openAddEvent()"><i class="fas fa-plus-circle"></i> Aggiungi Nuovo Evento</button>
+            </div>
+          </div>
+          <div id="moderationTableContainer">
+            <p style="color:var(--text-muted);font-style:italic;">Nessun evento in attesa di moderazione.</p>
+          </div>
+        </div>
+
+        <!-- PANNELLO SCRAPER & FONTI -->
+        <div id="panelScraper" class="admin-panel">
+          <div class="admin-grid">
+            <div class="sidebar-widget">
+              <h3><i class="fas fa-terminal"></i> Console Scraper Parallelo VdA</h3>
+              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.85rem;">Motore di estrazione reale multi-sorgente: scansiona in parallelo i portali ufficiali della Valle d'Aosta (LoveVDA, Forte di Bard, AostaSera, Google News VdA) per individuare automaticamente fonti ed eventi sul territorio.</p>
+              <div class="terminal-box" id="crawlerTerminal">
+                <div class="terminal-line info">[Pronto] Motore di Scraping Reale v6.0 attivo. Clicca su "Avvia Scraper Ora" o "Scopri Nuove Fonti VdA".</div>
+              </div>
+              <div class="progress-container"><div class="progress-bar" id="crawlerProgressBar"></div></div>
+              <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--text-secondary);margin:0.65rem 0;cursor:pointer;">
+                <input type="checkbox" id="scraperAutoApprove" checked style="width:16px;height:16px;cursor:pointer;">
+                <span><strong>Auto-Approva:</strong> pubblica subito i nuovi eventi estratti sulla Mappa e nel Catalogo</span>
+              </label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-top:0.5rem;">
+                <button class="btn-cta" id="btnRunScraper" style="width:100%;"><i class="fas fa-bolt"></i> Avvia Scraper Ora</button>
+                <button class="btn-cta" id="btnDiscoverSources" onclick="App.runSourceDiscovery()" style="width:100%;background:linear-gradient(135deg,#0284c7,#0369a1);box-shadow:0 4px 14px rgba(2,132,199,0.35);"><i class="fas fa-satellite-dish"></i> Scopri Fonti VdA</button>
+              </div>
+            </div>
+
+            <div class="sidebar-widget">
+              <h3><i class="fas fa-share-nodes"></i> Fonti di Scraping</h3>
+              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.85rem;">Aggiungi e verifica le sorgenti di dati per l'estrazione automatica.</p>
+
+              <form id="adminAddSourceForm" style="margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--glass-border);">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="srcAddName">Nome Sorgente</label>
+                    <input type="text" id="srcAddName" placeholder="es. Pro Loco Chatillon" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="srcAddType">Canale</label>
+                    <select id="srcAddType">
+                      <option value="official">Sito Ufficiale</option>
+                      <option value="facebook">Facebook</option>
+                      <option value="instagram">Instagram</option>
+                      <option value="other">Altro / Blog</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="srcAddUrl">URL Fonte</label>
+                  <input type="url" id="srcAddUrl" placeholder="https://..." required>
+                </div>
+                <button type="submit" class="btn-cta" style="width:100%;background:linear-gradient(135deg,var(--accent-secondary),#047857);box-shadow:0 4px 14px rgba(16,185,129,0.4);"><i class="fas fa-plus"></i> Aggiungi Fonte</button>
+              </form>
+
+              <h4 style="font-size:0.875rem;font-weight:700;margin-bottom:0.5rem;">Fonti Monitorate</h4>
+              <div class="sources-list" id="adminSourcesList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANNELLO GESTIONE UTENTI -->
+        <div id="panelUsers" class="admin-panel">
+          <div class="sidebar-widget" style="margin-bottom:1.5rem;">
+            <h3><i class="fas fa-user-plus"></i> Aggiungi Utente</h3>
+            <form id="addUserForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="newUsername">Username</label>
+                  <input type="text" id="newUsername" placeholder="nomeutente" required>
+                </div>
+                <div class="form-group">
+                  <label for="newPassword">Password</label>
+                  <input type="password" id="newPassword" placeholder="••••••" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="newEmail">Email</label>
+                  <input type="email" id="newEmail" placeholder="email@esempio.it">
+                </div>
+                <div class="form-group">
+                  <label for="newRole">Ruolo</label>
+                  <select id="newRole">
+                    <option value="editor">Editor</option>
+                    <option value="partner">Partner</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn-cta" style="width:100%;background:linear-gradient(135deg,var(--accent-secondary),#047857);box-shadow:0 4px 14px rgba(16,185,129,0.4);"><i class="fas fa-plus"></i> Crea Utente</button>
+            </form>
+          </div>
+
+          <div class="sidebar-widget">
+            <h3><i class="fas fa-users-cog"></i> Utenti Registrati</h3>
+            <div id="usersTableContainer" style="overflow-x:auto;"></div>
+          </div>
+        </div>
+
+        <!-- PANNELLO SPONSOR & INCASSI (CMS) -->
+        <div id="panelSponsors" class="admin-panel">
+          <div class="admin-grid">
+            <div class="sidebar-widget">
+              <h3><i class="fas fa-receipt"></i> Registro Incassi Sponsorizzazioni</h3>
+              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.85rem;">Lista delle transazioni commerciali simulate ricevute tramite il sistema di pagamento.</p>
+              <div style="overflow-x:auto;">
+                <table class="moderation-table" style="font-size:0.75rem;">
+                  <thead>
+                    <tr>
+                      <th>Descrizione Inserzione</th><th>Incasso</th><th>Data Transazione</th><th>Carta</th><th>Stato</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminPaymentsTableBody">
+                    <!-- Inserito da JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div class="sidebar-widget">
+              <h3><i class="fas fa-rectangle-ad"></i> Banner Pubblicitari Attivi (Sidebar)</h3>
+              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.85rem;">Inserisci e gestisci le pubblicità visualizzate nella colonna laterale.</p>
+              
+              <form id="adminAddAdForm" style="margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--glass-border);">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="adAddTitle">Titolo Annuncio</label>
+                    <input type="text" id="adAddTitle" placeholder="es. Ristorante Mont Blanc" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="adAddLink">Link Esterno</label>
+                    <input type="url" id="adAddLink" placeholder="https://..." required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="adAddDesc">Descrizione Breve</label>
+                  <input type="text" id="adAddDesc" placeholder="es. Sapori tipici della Valle d'Aosta..." required>
+                </div>
+                <div class="form-group">
+                  <label for="adAddImage">URL Immagine</label>
+                  <input type="url" id="adAddImage" placeholder="https://..." required>
+                </div>
+                <button type="submit" class="btn-cta" style="width:100%;background:linear-gradient(135deg,var(--accent-secondary),#047857);box-shadow:0 4px 14px rgba(13,148,136,0.3);"><i class="fas fa-plus"></i> Inserisci Pubblicità</button>
+              </form>
+              
+              <h4 style="font-size:0.875rem;font-weight:700;margin-bottom:0.5rem;">Lista Annunci Attivi</h4>
+              <div class="sources-list" id="adminAdsList">
+                <!-- Inserito da JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANNELLO GESTIONE COMUNI & ZONE (CMS) -->
+        <div id="panelComuni" class="admin-panel">
+          <div class="admin-grid">
+            <div class="sidebar-widget">
+              <h3><i class="fas fa-map-location-dot"></i> Gestione Comuni & Zone</h3>
+              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.85rem;">Associa ciascun comune della Valle d'Aosta ad una macro-area geografica (Alta, Media, Bassa Valle, Aosta). Questo influisce sul funzionamento dei filtri temporali e geografici pubblici.</p>
+              
+              <div style="overflow-x:auto;">
+                <table class="moderation-table" style="font-size:0.78rem;">
+                  <thead>
+                    <tr>
+                      <th>Comune</th><th>Lat / Lng</th><th>Associazione Zona / Area</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminComuniTableBody">
+                    <!-- Inserito da JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="sidebar-widget">
+              <h3><i class="fas fa-plus-circle"></i> Aggiungi Nuovo Comune</h3>
+              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.85rem;">Inserisci un comune personalizzato per espandere il database geografico.</p>
+              
+              <form id="adminAddComuneForm">
+                <div class="form-group">
+                  <label for="comuneAddName">Nome Comune *</label>
+                  <input type="text" id="comuneAddName" placeholder="es. Gaby" required>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="comuneAddLat">Latitudine *</label>
+                    <input type="number" id="comuneAddLat" step="0.000001" placeholder="es. 45.704" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="comuneAddLng">Longitudine *</label>
+                    <input type="number" id="comuneAddLng" step="0.000001" placeholder="es. 7.882" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="comuneAddArea">Zona / Raggruppamento *</label>
+                  <select id="comuneAddArea" required>
+                    <option value="alta">Alta Valle</option>
+                    <option value="media">Media Valle</option>
+                    <option value="bassa">Bassa Valle</option>
+                    <option value="aosta">Aosta Città</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn-cta" style="width:100%;background:linear-gradient(135deg,var(--accent-secondary),#047857);box-shadow:0 4px 14px rgba(13,148,136,0.3);"><i class="fas fa-plus"></i> Aggiungi Comune</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /adminDashboardContent -->
+    </section>
+
+  </div><!-- /main-column -->
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-widget">
+      <h3><i class="fas fa-award" style="color:var(--gold-sponsored);"></i> Spazio Sponsor</h3>
+      <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.5;">
+        Promuovi la tua attività o il tuo evento con posizionamento prioritario e banner dedicato.
+      </p>
+    </div>
+    <div id="sidebarAdsContainer"></div>
+  </aside>
+
+</main>
+
+<!-- ===================== MODALI ===================== -->
+
+<!-- DETTAGLIO EVENTO -->
+<div class="modal-overlay" id="eventDetailModal">
+  <div class="modal-container wide">
+    <div class="modal-close"><i class="fas fa-times"></i></div>
+    <div class="modal-body" id="eventDetailBody"></div>
+  </div>
+</div>
+
+<!-- MODIFICA EVENTO (Admin) -->
+<div class="modal-overlay" id="editEventModal">
+  <div class="modal-container wide">
+    <div class="modal-close"><i class="fas fa-times"></i></div>
+    <div class="modal-body">
+      <h3 class="modal-title"><i class="fas fa-edit"></i> Modifica Evento</h3>
+      <form id="editEventForm">
+        <input type="hidden" id="editEvtId">
+        <div class="form-group">
+          <label for="editEvtTitle">Titolo *</label>
+          <input type="text" id="editEvtTitle" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEvtDate">Data Inizio *</label>
+            <input type="date" id="editEvtDate" required>
+          </div>
+          <div class="form-group">
+            <label for="editEvtEndDate">Data Fine</label>
+            <input type="date" id="editEvtEndDate">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEvtLocation">Comune *</label>
+            <select id="editEvtLocation" required>
+              <!-- Popolato dinamicamente da JS -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editEvtArea">Area Geografica (Autocalcolata) *</label>
+            <select id="editEvtArea" required>
+              <option value="aosta">Aosta Città</option>
+              <option value="alta">Alta Valle</option>
+              <option value="media">Media Valle</option>
+              <option value="bassa">Bassa Valle</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEvtCategory">Categoria</label>
+            <select id="editEvtCategory">
+              <option value="culture">Cultura & Musei</option>
+              <option value="music">Musica & Concerti</option>
+              <option value="sport">Sport & Trail</option>
+              <option value="food_wine">Enogastronomia</option>
+              <option value="nature">Natura & Trekking</option>
+              <option value="markets">Fiere & Mercati</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editEvtPrice">Prezzo Ingresso</label>
+            <input type="text" id="editEvtPrice" placeholder="es. Gratuito, € 10">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEvtImportance">Importanza (da 1 a 10) *</label>
+            <select id="editEvtImportance" required>
+              <option value="1">1 - Molto Piccolo / Locale</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5 - Medio</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8 - Grande / Rilevante</option>
+              <option value="9">9</option>
+              <option value="10">10 - Evento Internazionale / Fiera</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editEvtSponsorTier">Livello Sponsor *</label>
+            <select id="editEvtSponsorTier" required>
+              <option value="standard">Standard (Nessuno)</option>
+              <option value="silver">Silver</option>
+              <option value="gold">Gold</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEvtTime">Orario Evento *</label>
+            <input type="text" id="editEvtTime" placeholder="es. 21:00 o Tutto il giorno" required>
+          </div>
+          <div class="form-group">
+            <!-- empty for grid alignment -->
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="editEvtDesc">Descrizione *</label>
+          <div class="wysiwyg-toolbar">
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('editEvtDesc', 'b')" title="Grassetto"><i class="fas fa-bold"></i></button>
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('editEvtDesc', 'i')" title="Corsivo"><i class="fas fa-italic"></i></button>
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('editEvtDesc', 'h')" title="Titolo H3"><i class="fas fa-heading"></i></button>
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('editEvtDesc', 'highlight')" title="Evidenziato"><i class="fas fa-highlighter"></i></button>
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('editEvtDesc', 'link')" title="Inserisci Link"><i class="fas fa-link"></i></button>
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('editEvtDesc', 'ul')" title="Lista Puntata"><i class="fas fa-list-ul"></i></button>
+          </div>
+          <textarea id="editEvtDesc" rows="3" required></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex-grow: 1;">
+            <label for="editEvtImage">URL Immagine</label>
+            <input type="url" id="editEvtImage" placeholder="https://...">
+            <div style="margin-top:0.4rem; font-size: 0.8rem; color: var(--text-secondary);">
+              Oppure carica da file locale:
+              <input type="file" id="editEvtFile" accept="image/*" style="display:block; margin-top:0.15rem; font-size:0.75rem;">
+            </div>
+          </div>
+          <div class="form-group" style="width: 130px; flex-shrink: 0;">
+            <label>Anteprima Foto</label>
+            <div class="image-live-preview" id="editEvtImagePreview">
+              <span style="font-size:0.65rem;color:var(--text-muted);">Nessuna immagine</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.25rem;">
+          <input type="checkbox" id="editEvtKids" style="width:auto;cursor:pointer;height:16px;width:16px;">
+          <label for="editEvtKids" style="margin-bottom:0;cursor:pointer;font-size:0.9rem;">👶 Adatto a bambini e famiglie</label>
+        </div>
+        <div class="form-row">
+          <button type="button" class="btn-cta" style="background:linear-gradient(135deg,var(--accent-secondary),#047857);" id="btnSaveApprove"><i class="fas fa-check-circle"></i> Salva & Approva</button>
+          <button type="button" class="btn-cta" style="background:var(--bg-tertiary);color:var(--text-secondary);box-shadow:none;" id="btnSaveOnly"><i class="fas fa-save"></i> Salva senza Approvare</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- INSERISCI NUOVO EVENTO (Admin) -->
+<div class="modal-overlay" id="addEventModal">
+  <div class="modal-container wide">
+    <div class="modal-close"><i class="fas fa-times"></i></div>
+    <div class="modal-body">
+      <h3 class="modal-title"><i class="fas fa-plus-circle"></i> Inserisci Nuovo Evento</h3>
+      <form id="addEventForm">
+        <div class="form-group">
+          <label for="addEvtTitle">Titolo *</label>
+          <input type="text" id="addEvtTitle" placeholder="es. Sagra delle Mele" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="addEvtDate">Data Inizio *</label>
+            <input type="date" id="addEvtDate" required>
+          </div>
+          <div class="form-group">
+            <label for="addEvtEndDate">Data Fine</label>
+            <input type="date" id="addEvtEndDate">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="addEvtLocation">Comune *</label>
+            <select id="addEvtLocation" required>
+              <!-- Popolato dinamicamente da JS -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="addEvtArea">Area Geografica (Autocalcolata) *</label>
+            <select id="addEvtArea" required>
+              <option value="aosta">Aosta Città</option>
+              <option value="alta">Alta Valle</option>
+              <option value="media">Media Valle</option>
+              <option value="bassa">Bassa Valle</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="addEvtCategory">Categoria</label>
+            <select id="addEvtCategory">
+              <option value="culture">Cultura & Musei</option>
+              <option value="music">Musica & Concerti</option>
+              <option value="sport">Sport & Trail</option>
+              <option value="food_wine">Enogastronomia</option>
+              <option value="nature">Natura & Trekking</option>
+              <option value="markets">Fiere & Mercati</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="addEvtPrice">Prezzo Ingresso</label>
+            <input type="text" id="addEvtPrice" placeholder="es. Gratuito, € 10">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="addEvtImportance">Importanza Evento (da 1 a 10) *</label>
+            <select id="addEvtImportance" required>
+              <option value="1">1 - Molto Piccolo / Locale</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5" selected>5 - Medio</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8 - Grande / Rilevante</option>
+              <option value="9">9</option>
+              <option value="10">10 - Evento Internazionale / Fiera</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="addEvtSponsorTier">Livello Sponsor</label>
+            <select id="addEvtSponsorTier">
+              <option value="standard">Standard (Nessuno)</option>
+              <option value="silver">Silver</option>
+              <option value="gold">Gold</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="addEvtTime">Orario Evento *</label>
+            <input type="text" id="addEvtTime" placeholder="es. 21:00 o Tutto il giorno" required>
+          </div>
+          <div class="form-group">
+            <!-- empty for grid alignment -->
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="addEvtDesc">Descrizione *</label>
+          <div class="wysiwyg-toolbar">
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('addEvtDesc', 'b')" title="Grassetto"><i class="fas fa-bold"></i></button>
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('addEvtDesc', 'i')" title="Corsivo"><i class="fas fa-italic"></i></button>
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('addEvtDesc', 'h')" title="Titolo H3"><i class="fas fa-heading"></i></button>
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('addEvtDesc', 'highlight')" title="Evidenziato"><i class="fas fa-highlighter"></i></button>
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('addEvtDesc', 'link')" title="Inserisci Link"><i class="fas fa-link"></i></button>
+            <button type="button" class="btn-wysiwyg" onclick="App.insertFormatting('addEvtDesc', 'ul')" title="Lista Puntata"><i class="fas fa-list-ul"></i></button>
+          </div>
+          <textarea id="addEvtDesc" rows="3" placeholder="Descrizione dettagliata dell'evento..." required></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex-grow: 1;">
+            <label for="addEvtImage">URL Immagine</label>
+            <input type="url" id="addEvtImage" placeholder="https://...">
+            <div style="margin-top:0.4rem; font-size: 0.8rem; color: var(--text-secondary);">
+              Oppure carica da file locale:
+              <input type="file" id="addEvtFile" accept="image/*" style="display:block; margin-top:0.15rem; font-size:0.75rem;">
+            </div>
+          </div>
+          <div class="form-group" style="width: 130px; flex-shrink: 0;">
+            <label>Anteprima Foto</label>
+            <div class="image-live-preview" id="addEvtImagePreview">
+              <span style="font-size:0.65rem;color:var(--text-muted);">Nessuna immagine</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.25rem;">
+          <input type="checkbox" id="addEvtKids" style="width:auto;cursor:pointer;height:16px;width:16px;">
+          <label for="addEvtKids" style="margin-bottom:0;cursor:pointer;font-size:0.9rem;">👶 Adatto a bambini e famiglie</label>
+        </div>
+        <div class="form-row">
+          <button type="button" class="btn-cta" style="background:linear-gradient(135deg,var(--accent-secondary),#047857);" id="btnAddSaveApprove"><i class="fas fa-check-circle"></i> Crea & Approva</button>
+          <button type="button" class="btn-cta" style="background:var(--bg-tertiary);color:var(--text-secondary);box-shadow:none;" id="btnAddSaveOnly"><i class="fas fa-save"></i> Crea come in Attesa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- SPONSORIZZA EVENTO -->
+<div class="modal-overlay" id="sponsorEventModal">
+  <div class="modal-container">
+    <div class="modal-close"><i class="fas fa-times"></i></div>
+    <div class="modal-body">
+      <h3 class="modal-title">Sponsorizza un Evento Privato</h3>
+      <p style="color:var(--text-secondary);margin-bottom:1.25rem;font-size:0.9rem;">Gli eventi sponsorizzati appaiono in cima alla griglia con bordo dorato e badge premium.</p>
+      <form id="sponsorEventForm">
+        <div class="form-group"><label for="evtSponsorTitle">Titolo *</label><input type="text" id="evtSponsorTitle" required></div>
+        <div class="form-row">
+          <div class="form-group"><label for="evtSponsorDate">Data *</label><input type="date" id="evtSponsorDate" required></div>
+          <div class="form-group"><label for="evtSponsorTown">Comune *</label><input type="text" id="evtSponsorTown" required></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="evtSponsorArea">Area *</label>
+            <select id="evtSponsorArea" required>
+              <option value="aosta">Aosta Città</option><option value="alta">Alta Valle</option>
+              <option value="media">Media Valle</option><option value="bassa">Bassa Valle</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="evtSponsorCategory">Categoria *</label>
+            <select id="evtSponsorCategory" required>
+              <option value="culture">Cultura</option><option value="music">Musica</option>
+              <option value="sport">Sport</option><option value="food_wine">Enogastronomia</option>
+              <option value="nature">Natura</option><option value="markets">Fiere</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label for="evtSponsorDesc">Descrizione *</label><textarea id="evtSponsorDesc" rows="3" required></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label for="evtSponsorPrice">Prezzo</label><input type="text" id="evtSponsorPrice" placeholder="es. Gratuito"></div>
+          <div class="form-group"><label for="evtSponsorTier">Piano *</label>
+            <select id="evtSponsorTier">
+              <option value="gold">Gold - Evidenza Assoluta (€49)</option>
+              <option value="silver">Silver - Evidenziazione (€19)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label for="evtSponsorImage">URL Immagine</label><input type="url" id="evtSponsorImage" placeholder="https://..."></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+          <input type="checkbox" id="evtSponsorKids" style="width:auto;cursor:pointer;height:16px;width:16px;">
+          <label for="evtSponsorKids" style="margin-bottom:0;cursor:pointer;">👶 Adatto a bambini</label>
+        </div>
+        <button type="submit" class="btn-cta" style="width:100%;"><i class="fas fa-credit-card"></i> Procedi al Pagamento</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- SPONSORIZZA ATTIVITÀ/SALETTA -->
+<div class="modal-overlay" id="sponsorServiceModal">
+  <div class="modal-container">
+    <div class="modal-close"><i class="fas fa-times"></i></div>
+    <div class="modal-body">
+      <h3 class="modal-title">Inserisci la tua Attività o Location</h3>
+      <form id="sponsorServiceForm">
+        <div class="form-group"><label for="srvSponsorName">Nome Attività *</label><input type="text" id="srvSponsorName" required></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="srvSponsorType">Tipo *</label>
+            <select id="srvSponsorType">
+              <option value="venue">Saletta / Location</option><option value="entertainment">Animazione</option>
+              <option value="catering">Catering</option><option value="organizer">Organizzazione Feste</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="srvSponsorArea">Area *</label>
+            <select id="srvSponsorArea">
+              <option value="aosta">Aosta Città</option><option value="alta">Alta Valle</option>
+              <option value="media">Media Valle</option><option value="bassa">Bassa Valle</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="srvSponsorTown">Comune *</label><input type="text" id="srvSponsorTown" required></div>
+          <div class="form-group"><label for="srvSponsorPrice">Prezzo *</label><input type="text" id="srvSponsorPrice" required></div>
+        </div>
+        <div class="form-group"><label for="srvSponsorContacts">Contatti *</label><input type="text" id="srvSponsorContacts" required></div>
+        <div class="form-group"><label for="srvSponsorDesc">Descrizione *</label><textarea id="srvSponsorDesc" rows="3" required></textarea></div>
+        <div class="form-group"><label for="srvSponsorImage">URL Immagine</label><input type="url" id="srvSponsorImage" placeholder="https://..."></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+          <input type="checkbox" id="srvSponsorOpt" style="width:auto;cursor:pointer;">
+          <label for="srvSponsorOpt" style="margin-bottom:0;cursor:pointer;">Sponsorizza come "Consigliato" (+€50/mese)</label>
+        </div>
+        <button type="submit" class="btn-cta" style="width:100%;background:linear-gradient(135deg,var(--accent-secondary),#047857);box-shadow:0 4px 14px rgba(16,185,129,0.4);"><i class="fas fa-credit-card"></i> Procedi al Pagamento</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT PAGAMENTO -->
+<div class="modal-overlay" id="checkoutPaymentModal">
+  <div class="modal-container">
+    <div class="modal-close"><i class="fas fa-times"></i></div>
+    <div class="modal-body">
+      <h3 class="modal-title">Checkout Sicuro</h3>
+      <h4 id="checkoutAmountText" style="text-align:center;color:var(--accent-secondary);font-size:1.1rem;margin-bottom:1.25rem;"></h4>
+      <div class="credit-card-wrapper">
+        <div class="credit-card">
+          <div class="card-front">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div class="card-chip"></div>
+              <i class="fab fa-cc-visa" style="font-size:2rem;"></i>
+            </div>
+            <div class="card-number" id="cardDisplayNumber">•••• •••• •••• ••••</div>
+            <div class="card-holder-group">
+              <div><div style="font-size:0.55rem;opacity:0.7;">Titolare</div><div id="cardDisplayName" style="font-weight:600;">NOME INTESTATARIO</div></div>
+              <div><div style="font-size:0.55rem;opacity:0.7;">Scadenza</div><div id="cardDisplayExpiry" style="font-weight:600;">MM/AA</div></div>
+            </div>
+          </div>
+          <div class="card-back">
+            <div class="card-stripe"></div>
+            <div style="margin-top:0.85rem;">
+              <div style="font-size:0.55rem;opacity:0.7;text-align:right;margin-right:0.85rem;">CVV</div>
+              <div class="card-cvv-box" id="cardDisplayCvv">•••</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <form id="paymentForm">
+        <div class="form-group"><label for="cardNumber">Numero Carta</label><input type="text" id="cardNumber" placeholder="4000 1234 5678 9010" maxlength="19" required></div>
+        <div class="form-group"><label for="cardName">Nome sulla Carta</label><input type="text" id="cardName" placeholder="Mario Rossi" required></div>
+        <div class="form-row">
+          <div class="form-group"><label for="cardExpiry">Scadenza</label><input type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5" required></div>
+          <div class="form-group"><label for="cardCvv">CVV</label><input type="text" id="cardCvv" placeholder="123" maxlength="3" required></div>
+        </div>
+        <button type="submit" class="btn-cta" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.4);"><i class="fas fa-lock"></i> Paga Ora</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- FLOATING ADMIN QUICK ACCESS -->
+<a href="#" class="floating-admin-btn" onclick="navTo('admin'); return false;" title="Area Riservata Admin">
+  <i class="fas fa-lock"></i>
+  <span>Area Admin</span>
+</a>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-container">
+    <div class="footer-text">&copy; 2026 <strong>EventiVDA</strong> — Il Portale degli Eventi e delle Attività in Valle d'Aosta. Tutti i diritti riservati.</div>
+    <div class="footer-links">
+      <a href="#" class="footer-admin-link" onclick="navTo('admin'); return false;"><i class="fas fa-lock"></i> Area Riservata Admin</a>
+    </div>
+  </div>
+</footer>
+
+<script src="vda-comuni-paths.js?v=9.0"></script>
+<script src="data.js?v=9.0"></script>
+<script src="scraper.js?v=9.0"></script>
+<script src="app.js?v=9.0"></script>
+</body>
+</html>

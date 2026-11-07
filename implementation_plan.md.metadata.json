@@ -1,0 +1,6 @@
+{
+  "summary":  "Implementation plan for integrating Leaflet map of Valle d'Aosta with municipalities, transitioning event categories/areas to dropdowns, fixing the event scraper, supporting image file upload, and adding an admin section for Comuni-to-Area groupings management.",
+  "updatedAt":  "2026-07-01T21:32:24.478366300Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

@@ -1,0 +1,5 @@
+node_modules/
+.tile_cache/
+.env
+*.log
+vda_comuni_geojson.json

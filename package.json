@@ -1,0 +1,22 @@
+{
+  "name": "eventivda",
+  "version": "9.0.0",
+  "description": "EventiVDA — Il portale degli eventi, rassegne e attività in Valle d'Aosta con scraper automatico multi-fonte e cartina interattiva dei 74 Comuni.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo 'Build completata (nessun passo di compilazione richiesto)'"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "valle-d-aosta",
+    "eventivda",
+    "eventi",
+    "saison-culturelle",
+    "aosta"
+  ],
+  "author": "davidgra81",
+  "license": "MIT"
+}
