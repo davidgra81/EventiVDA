@@ -298,7 +298,7 @@ const INITIAL_SERVICES = [
 ];
 
 const INITIAL_USERS = [
-  { id: "u-01", username: "admin1", password: "admin1", role: "admin", email: "admin@vdaevents.it", createdAt: "2026-01-01T00:00:00Z" },
+  { id: "u-01", username: "admin1", password: "Adm1n€vent!", role: "admin", email: "davidgra81@gmail.com", createdAt: "2026-01-01T00:00:00Z" },
   { id: "u-02", username: "proloco_cogne", password: "cogne2026", role: "editor", email: "proloco@cogne.it", createdAt: "2026-03-15T00:00:00Z" },
   { id: "u-03", username: "terme_pre", password: "terme2026", role: "partner", email: "info@termedipre.it", createdAt: "2026-04-01T00:00:00Z" }
 ];
@@ -383,11 +383,12 @@ const DEFAULT_COMUNI = [
 ];
 
 function initializeStorage() {
-  const CURRENT_SCHEMA = "v9.0";
+  const CURRENT_SCHEMA = "v10.1";
   if (localStorage.getItem("vda_schema_version") !== CURRENT_SCHEMA) {
     localStorage.setItem("vda_events", JSON.stringify(INITIAL_EVENTS));
     localStorage.setItem("vda_sources", JSON.stringify(INITIAL_SOURCES));
     localStorage.setItem("vda_comuni", JSON.stringify(DEFAULT_COMUNI));
+    localStorage.setItem("vda_users", JSON.stringify(INITIAL_USERS));
     localStorage.setItem("vda_schema_version", CURRENT_SCHEMA);
   }
 

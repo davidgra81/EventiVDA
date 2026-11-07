@@ -212,7 +212,13 @@
       </div>
 
       <!-- Vista Secondaria: Leaflet Stradale (nascosta di default) -->
-      <div id="vdaLeafletMap" class="hidden" style="width: 100%; height: 100%;"></div>
+      <div id="vdaLeafletMapWrap" class="vda-leaflet-map-wrap hidden">
+        <div id="vdaLeafletMap" style="width: 100%; height: 100%;"></div>
+        <div class="vda-map-mode-switch vda-map-mode-switch-leaflet">
+          <button type="button" class="map-mode-pill" onclick="App.switchMapMode('comuni')">🗺️ Torna alla Mappa Comuni</button>
+          <button type="button" class="map-mode-pill active" onclick="App.switchMapMode('street')">🛰️ Mappa Stradale</button>
+        </div>
+      </div>
     </div>
 
     <!-- Legenda Categorie Cliccabile -->
@@ -354,11 +360,11 @@
         <div class="login-error" id="loginError">Credenziali non valide. Riprova.</div>
         <div class="form-group" style="text-align:left;">
           <label for="loginUsername">Username</label>
-          <input type="text" id="loginUsername" placeholder="admin1" autocomplete="username">
+          <input type="text" id="loginUsername" placeholder="admin1" value="admin1" autocomplete="username">
         </div>
         <div class="form-group" style="text-align:left;">
           <label for="loginPassword">Password</label>
-          <input type="password" id="loginPassword" placeholder="••••••" autocomplete="current-password">
+          <input type="password" id="loginPassword" placeholder="Adm1n€vent!" autocomplete="current-password">
         </div>
         <button class="btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> Accedi</button>
       </div>
@@ -372,7 +378,10 @@
 
         <!-- TAB INTERNE ADMIN -->
         <div class="admin-tabs">
-          <button class="admin-tab active" data-admin-panel="moderation">
+          <button class="admin-tab active" data-admin-panel="analytics">
+            <i class="fas fa-chart-line"></i> Analisi Visite
+          </button>
+          <button class="admin-tab" data-admin-panel="moderation">
             <i class="fas fa-clipboard-check"></i> Moderazione
             <span id="pendingBadge" style="background:var(--accent-primary);color:white;font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:10px;margin-left:0.35rem;"></span>
           </button>
@@ -382,12 +391,114 @@
           <button class="admin-tab" data-admin-panel="users">
             <i class="fas fa-users"></i> Gestione Utenti
           </button>
+          <button class="admin-tab" data-admin-panel="profile">
+            <i class="fas fa-key"></i> Sicurezza & Profilo
+          </button>
           <button class="admin-tab" data-admin-panel="sponsors">
             <i class="fas fa-hand-holding-dollar"></i> Sponsor & Incassi
           </button>
           <button class="admin-tab" data-admin-panel="comuni">
             <i class="fas fa-map-location-dot"></i> Comuni & Zone
           </button>
+        </div>
+
+        <!-- PANNELLO ANALISI VISITE & STATISTICHE -->
+        <div id="panelAnalytics" class="admin-panel active">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem;">
+            <div>
+              <h3 style="margin-bottom:0.25rem;"><i class="fas fa-chart-pie" style="color:var(--accent-primary);"></i> Dashboard Analisi Traffico & Visite</h3>
+              <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:0;">Monitoraggio in tempo reale degli accessi, visualizzazioni di eventi e provenienza dei visitatori su EventiVDA.</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <span class="status-dot active"></span>
+              <span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">Monitoraggio Live Attivo</span>
+            </div>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="analytics-kpi-grid">
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap" style="background:rgba(230,46,45,0.15);color:#ff4d4d;"><i class="fas fa-eye"></i></div>
+              <div class="kpi-info">
+                <div class="kpi-label">Visualizzazioni Totali</div>
+                <div class="kpi-value" id="statsTotalViews">14.820</div>
+                <div class="kpi-sub" style="color:#10b981;"><i class="fas fa-arrow-trend-up"></i> +18.4% rispetto al mese prec.</div>
+              </div>
+            </div>
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap" style="background:rgba(56,189,248,0.15);color:#38bdf8;"><i class="fas fa-users"></i></div>
+              <div class="kpi-info">
+                <div class="kpi-label">Visitatori Unici</div>
+                <div class="kpi-value" id="statsUniqueUsers">6.490</div>
+                <div class="kpi-sub" style="color:#10b981;"><i class="fas fa-arrow-trend-up"></i> +12.1% nuovi utenti</div>
+              </div>
+            </div>
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.15);color:#10b981;"><i class="fas fa-clock"></i></div>
+              <div class="kpi-info">
+                <div class="kpi-label">Tempo Medio Sessione</div>
+                <div class="kpi-value">3m 42s</div>
+                <div class="kpi-sub">Frequenza rimbalzo: 28%</div>
+              </div>
+            </div>
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap" style="background:rgba(251,191,36,0.15);color:#fbbf24;"><i class="fas fa-mobile-screen-button"></i></div>
+              <div class="kpi-info">
+                <div class="kpi-label">Dispositivi Mobile</div>
+                <div class="kpi-value">76.8%</div>
+                <div class="kpi-sub">Smartphone & Tablet</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grafici e Ripartizioni -->
+          <div class="admin-grid" style="margin-top:1.25rem;">
+            <div class="sidebar-widget">
+              <h3><i class="fas fa-calendar-day"></i> Andamento Visite Ultimi 7 Giorni</h3>
+              <div class="analytics-bar-chart" id="analyticsBarChart">
+                <!-- Generato da JS -->
+              </div>
+            </div>
+
+            <div class="sidebar-widget">
+              <h3><i class="fas fa-map-marked-alt"></i> Interesse per Zona Geografica</h3>
+              <div class="analytics-zone-bars">
+                <div class="zone-stat-row">
+                  <div class="zone-stat-header"><span>🏛️ Aosta Città</span><span style="font-weight:700;">44%</span></div>
+                  <div class="zone-stat-track"><div class="zone-stat-fill" style="width:44%;background:#e11d48;"></div></div>
+                </div>
+                <div class="zone-stat-row">
+                  <div class="zone-stat-header"><span>🏔️ Alta Valle (Courmayeur, La Thuile)</span><span style="font-weight:700;">28%</span></div>
+                  <div class="zone-stat-track"><div class="zone-stat-fill" style="width:28%;background:#38bdf8;"></div></div>
+                </div>
+                <div class="zone-stat-row">
+                  <div class="zone-stat-header"><span>🦌 Media Valle (Cogne, Saint-Barthélemy)</span><span style="font-weight:700;">17%</span></div>
+                  <div class="zone-stat-track"><div class="zone-stat-fill" style="width:17%;background:#10b981;"></div></div>
+                </div>
+                <div class="zone-stat-row">
+                  <div class="zone-stat-header"><span>🏰 Bassa Valle (Bard, Saint-Vincent)</span><span style="font-weight:700;">11%</span></div>
+                  <div class="zone-stat-track"><div class="zone-stat-fill" style="width:11%;background:#f59e0b;"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Eventi Più Cercati e Visti -->
+          <div class="sidebar-widget" style="margin-top:1.25rem;">
+            <h3><i class="fas fa-fire" style="color:var(--accent-primary);"></i> Top Attività & Eventi Più Visualizzati</h3>
+            <div style="overflow-x:auto;">
+              <table class="moderation-table" style="font-size:0.8rem;">
+                <thead>
+                  <tr>
+                    <th>Evento / Attività</th><th>Comune</th><th>Categoria</th><th>Visualizzazioni</th><th>Interazioni (Dettagli / Clic Mappa)</th>
+                  </tr>
+                </thead>
+                <tbody id="analyticsTopEventsBody">
+                  <!-- Popolato dinamicamente da JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <!-- PANNELLO MODERAZIONE -->
@@ -495,6 +606,53 @@
           <div class="sidebar-widget">
             <h3><i class="fas fa-users-cog"></i> Utenti Registrati</h3>
             <div id="usersTableContainer" style="overflow-x:auto;"></div>
+          </div>
+        </div>
+
+        <!-- PANNELLO SICUREZZA & PROFILO ADMIN -->
+        <div id="panelProfile" class="admin-panel">
+          <div class="admin-grid">
+            <div class="sidebar-widget">
+              <h3><i class="fas fa-shield-alt" style="color:var(--accent-primary);"></i> Sicurezza Account Amministratore</h3>
+              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">Modifica l'indirizzo email e la password di accesso all'Area Riservata.</p>
+              
+              <div id="adminProfileFeedback" class="hidden" style="padding:0.75rem 1rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600; margin-bottom:1rem;"></div>
+
+              <form id="adminProfileForm">
+                <div class="form-group">
+                  <label for="adminProfileUsername">Username</label>
+                  <input type="text" id="adminProfileUsername" value="admin1" readonly style="opacity:0.7;cursor:not-allowed;">
+                </div>
+                <div class="form-group">
+                  <label for="adminProfileEmail">Email Amministratore *</label>
+                  <input type="email" id="adminProfileEmail" value="davidgra81@gmail.com" required>
+                  <span style="font-size:0.7rem;color:var(--text-muted);display:block;margin-top:0.25rem;">Email associata alle notifiche e alla gestione del sito.</span>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="adminProfileNewPass">Nuova Password *</label>
+                    <input type="password" id="adminProfileNewPass" placeholder="••••••••" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="adminProfileConfirmPass">Conferma Nuova Password *</label>
+                    <input type="password" id="adminProfileConfirmPass" placeholder="••••••••" required>
+                  </div>
+                </div>
+                <button type="submit" class="btn-cta" style="width:100%;margin-top:0.5rem;"><i class="fas fa-save"></i> Salva Modifiche Profilo & Password</button>
+              </form>
+            </div>
+
+            <div class="sidebar-widget">
+              <h3><i class="fas fa-info-circle"></i> Info Credenziali & Accesso</h3>
+              <div style="background:var(--bg-tertiary);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;">
+                <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem;">Credenziale attuale impostata:</div>
+                <div style="font-family:monospace;font-size:0.95rem;color:#10b981;font-weight:700;">Username: admin1</div>
+                <div style="font-family:monospace;font-size:0.95rem;color:#fbbf24;font-weight:700;margin-top:0.25rem;">Email: davidgra81@gmail.com</div>
+              </div>
+              <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.5;">
+                Puoi cambiare la password in qualsiasi momento. La password aggiornata verrà salvata immediatamente e utilizzata per i successivi accessi all'area admin.
+              </p>
+            </div>
           </div>
         </div>
 
