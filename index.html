@@ -5,31 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
   <title>EventiVDA | Eventi, Rassegne e Attività in Valle d'Aosta</title>
-  <meta name="description" content="EventiVDA — Il portale degli eventi in Valle d'Aosta. Ricerca per comune, valle, categoria, giorno/sera e Saison Culturelle.">
+  <meta name="description" content="EventiVDA — Il portale completo degli eventi nei 74 Comuni della Valle d'Aosta. Concerti, mostre, sagre, Saison Culturelle e mappa interattiva.">
+  <link rel="canonical" href="https://eventivda.onrender.com/">
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://eventivda.onrender.com/">
+  <meta property="og:title" content="EventiVDA | Eventi, Rassegne e Attività in Valle d'Aosta">
+  <meta property="og:description" content="Scopri tutti gli eventi, rassegne culturali, mercatini e attività nei 74 Comuni della Valle d'Aosta con mappa interattiva e filtri in tempo reale.">
+  <meta property="og:image" content="https://eventivda.onrender.com/assets/vda_hero_bg.jpg">
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://eventivda.onrender.com/">
+  <meta name="twitter:title" content="EventiVDA | Eventi, Rassegne e Attività in Valle d'Aosta">
+  <meta name="twitter:description" content="Tutti gli eventi, concerti e spettacoli in Valle d'Aosta con mappa interattiva dei 74 Comuni.">
+  <meta name="twitter:image" content="https://eventivda.onrender.com/assets/vda_hero_bg.jpg">
+
+  <!-- Preconnect per performance CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://unpkg.com">
+
   <link rel="icon" type="image/svg+xml" href="logo-eventivda.svg">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <link rel="stylesheet" href="style.css?v=9.0">
+  <link rel="stylesheet" href="style.css?v=9.1">
+
+  <!-- Dati Strutturati Schema.org (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "EventiVDA",
+    "url": "https://eventivda.onrender.com/",
+    "description": "Portale completo degli eventi, spettacoli e rassegne nei 74 Comuni della Valle d'Aosta.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://eventivda.onrender.com/?search={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
 </head>
 <body>
 
 <!-- HEADER NAVBAR -->
+<h1 class="sr-only">EventiVDA — Il portale degli eventi, spettacoli, rassegne e manifestazioni in Valle d'Aosta</h1>
 <header>
   <div class="nav-container">
-    <a href="#" class="logo" onclick="navTo('eventi')">
+    <a href="#" class="logo" onclick="navTo('eventi')" aria-label="Torna alla home di EventiVDA">
       <img src="logo-eventivda.svg" alt="EventiVDA Logo" class="logo-svg-img">
       <div class="logo-brand-text">
         <span class="logo-main-name">Eventi<span class="logo-vda-accent">VDA</span></span>
         <span class="logo-sub-tag">Valle d'Aosta</span>
       </div>
     </a>
-    <nav>
+    <nav aria-label="Navigazione principale">
       <ul>
         <li><span class="nav-link active" data-target="eventi" onclick="navTo('eventi')"><i class="fas fa-calendar-alt"></i> Eventi</span></li>
         <li><span class="nav-link" data-target="servizi" onclick="navTo('servizi')"><i class="fas fa-magic"></i> Servizi & Location</span></li>
         <li><span class="nav-link" data-target="admin" onclick="navTo('admin')"><i class="fas fa-lock"></i> Area Admin</span></li>
-        <li><button class="theme-toggle" id="themeToggle" title="Cambia tema"><i class="fas fa-sun" id="themeIcon"></i></button></li>
+        <li><button class="theme-toggle" id="themeToggle" title="Cambia tema" aria-label="Attiva tema chiaro o scuro"><i class="fas fa-sun" id="themeIcon"></i></button></li>
         <li><button class="btn-cta" id="btnSponsorEvent"><i class="fas fa-bullhorn"></i> Sponsorizza Evento</button></li>
       </ul>
     </nav>
@@ -161,7 +199,7 @@
     <!-- Bambini & Famiglie -->
     <div class="filter-group" style="margin-bottom: 0.55rem;">
       <label class="filter-kids-row">
-        <input type="checkbox" id="eventChildrenFilter">
+        <input type="checkbox" id="eventChildrenFilter" aria-label="Mostra solo eventi adatti a bambini e famiglie">
         <span>👶 Adatto a bambini e famiglie</span>
       </label>
     </div>
@@ -258,8 +296,8 @@
         <div class="dual-range-track"></div>
         <div class="slider-priority-zone-mark" style="left: 75%;" title="Priorità 30 Giorni"></div>
         <div class="dual-range-fill" id="rangeSliderFill"></div>
-        <input type="range" id="rangeMin" class="range-input" min="0" max="40" value="0" step="1">
-        <input type="range" id="rangeMax" class="range-input" min="0" max="40" value="30" step="1">
+        <input type="range" id="rangeMin" class="range-input" min="0" max="40" value="0" step="1" aria-label="Inizio intervallo temporale ricerca">
+        <input type="range" id="rangeMax" class="range-input" min="0" max="40" value="30" step="1" aria-label="Fine intervallo temporale ricerca">
       </div>
       <div class="range-month-labels">
         <span>Oggi</span>
@@ -297,7 +335,7 @@
           <span class="results-count" id="eventsResultsCount">0 eventi</span>
         </h2>
         <div class="events-view-controls">
-          <select id="eventSortSelect" class="sort-select" onchange="App.setEventsSort(this.value)" title="Ordina eventi">
+          <select id="eventSortSelect" class="sort-select" onchange="App.setEventsSort(this.value)" title="Ordina eventi" aria-label="Ordina eventi per">
             <option value="date">📅 Data (Più vicini)</option>
             <option value="relevance">⭐ Importanza & Sponsor</option>
             <option value="location">📍 Comune (A-Z)</option>
@@ -327,7 +365,7 @@
       <div class="services-filter-bar">
         <div style="display:flex;flex-direction:column;gap:0.25rem;">
           <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);">Tipo</label>
-          <select id="serviceTypeFilter">
+          <select id="serviceTypeFilter" aria-label="Filtra servizi per tipologia">
             <option value="">Tutti i servizi</option>
             <option value="venue">Salette / Location</option>
             <option value="entertainment">Animazione feste</option>
@@ -337,7 +375,7 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:0.25rem;">
           <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);">Zona</label>
-          <select id="serviceLocationFilter">
+          <select id="serviceLocationFilter" aria-label="Filtra servizi per zona o comune">
             <option value="">Tutte le zone</option>
             <option value="aosta">Aosta Città</option>
             <option value="alta">Alta Valle</option>
@@ -358,15 +396,17 @@
         <h2>Area Riservata</h2>
         <p>Inserisci le tue credenziali per accedere al pannello di amministrazione.</p>
         <div class="login-error" id="loginError">Credenziali non valide. Riprova.</div>
-        <div class="form-group" style="text-align:left;">
-          <label for="loginUsername">Username</label>
-          <input type="text" id="loginUsername" placeholder="admin1" value="admin1" autocomplete="username">
-        </div>
-        <div class="form-group" style="text-align:left;">
-          <label for="loginPassword">Password</label>
-          <input type="password" id="loginPassword" placeholder="Adm1n€vent!" autocomplete="current-password">
-        </div>
-        <button class="btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> Accedi</button>
+        <form id="adminLoginForm" onsubmit="event.preventDefault();">
+          <div class="form-group" style="text-align:left;">
+            <label for="loginUsername">Username</label>
+            <input type="text" id="loginUsername" placeholder="Nome utente" autocomplete="username" required>
+          </div>
+          <div class="form-group" style="text-align:left;">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+          </div>
+          <button type="submit" class="btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> Accedi</button>
+        </form>
       </div>
 
       <!-- DASHBOARD ADMIN (visibile solo dopo login) -->
@@ -421,32 +461,32 @@
               <div class="kpi-icon-wrap" style="background:rgba(230,46,45,0.15);color:#ff4d4d;"><i class="fas fa-eye"></i></div>
               <div class="kpi-info">
                 <div class="kpi-label">Visualizzazioni Totali</div>
-                <div class="kpi-value" id="statsTotalViews">14.820</div>
-                <div class="kpi-sub" style="color:#10b981;"><i class="fas fa-arrow-trend-up"></i> +18.4% rispetto al mese prec.</div>
+                <div class="kpi-value" id="statsTotalViews">0</div>
+                <div class="kpi-sub" id="statsTotalViewsSub" style="color:#10b981;"><i class="fas fa-chart-line"></i> Conteggio reale visite</div>
               </div>
             </div>
             <div class="analytics-kpi-card">
               <div class="kpi-icon-wrap" style="background:rgba(56,189,248,0.15);color:#38bdf8;"><i class="fas fa-users"></i></div>
               <div class="kpi-info">
                 <div class="kpi-label">Visitatori Unici</div>
-                <div class="kpi-value" id="statsUniqueUsers">6.490</div>
-                <div class="kpi-sub" style="color:#10b981;"><i class="fas fa-arrow-trend-up"></i> +12.1% nuovi utenti</div>
+                <div class="kpi-value" id="statsUniqueUsers">0</div>
+                <div class="kpi-sub" id="statsUniqueUsersSub" style="color:#10b981;"><i class="fas fa-user-check"></i> Sessioni distinte</div>
               </div>
             </div>
             <div class="analytics-kpi-card">
-              <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.15);color:#10b981;"><i class="fas fa-clock"></i></div>
+              <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.15);color:#10b981;"><i class="fas fa-calendar-check"></i></div>
               <div class="kpi-info">
-                <div class="kpi-label">Tempo Medio Sessione</div>
-                <div class="kpi-value">3m 42s</div>
-                <div class="kpi-sub">Frequenza rimbalzo: 28%</div>
+                <div class="kpi-label">Eventi Pubblicati</div>
+                <div class="kpi-value" id="statsActiveEvents">0</div>
+                <div class="kpi-sub" style="color:var(--text-muted);">Attivi e approvati</div>
               </div>
             </div>
             <div class="analytics-kpi-card">
-              <div class="kpi-icon-wrap" style="background:rgba(251,191,36,0.15);color:#fbbf24;"><i class="fas fa-mobile-screen-button"></i></div>
+              <div class="kpi-icon-wrap" style="background:rgba(251,191,36,0.15);color:#fbbf24;"><i class="fas fa-mouse-pointer"></i></div>
               <div class="kpi-info">
-                <div class="kpi-label">Dispositivi Mobile</div>
-                <div class="kpi-value">76.8%</div>
-                <div class="kpi-sub">Smartphone & Tablet</div>
+                <div class="kpi-label">Interazioni Eventi</div>
+                <div class="kpi-value" id="statsTotalClicks">0</div>
+                <div class="kpi-sub" style="color:var(--text-muted);">Dettagli e clic mappa</div>
               </div>
             </div>
           </div>
@@ -572,39 +612,44 @@
 
         <!-- PANNELLO GESTIONE UTENTI -->
         <div id="panelUsers" class="admin-panel">
+          <div id="usersFeedback" class="hidden" style="padding:0.75rem 1rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600; margin-bottom:1rem;"></div>
+
           <div class="sidebar-widget" style="margin-bottom:1.5rem;">
-            <h3><i class="fas fa-user-plus"></i> Aggiungi Utente</h3>
+            <h3><i class="fas fa-user-plus"></i> Aggiungi Nuovo Utente Operativo</h3>
             <form id="addUserForm">
               <div class="form-row">
                 <div class="form-group">
-                  <label for="newUsername">Username</label>
-                  <input type="text" id="newUsername" placeholder="nomeutente" required>
+                  <label for="newUsername">Username *</label>
+                  <input type="text" id="newUsername" placeholder="Es. operatore_aosta" required autocomplete="off">
                 </div>
                 <div class="form-group">
-                  <label for="newPassword">Password</label>
-                  <input type="password" id="newPassword" placeholder="••••••" required>
+                  <label for="newPassword">Password *</label>
+                  <input type="password" id="newPassword" placeholder="Minimo 6 caratteri" required autocomplete="new-password">
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group">
-                  <label for="newEmail">Email</label>
-                  <input type="email" id="newEmail" placeholder="email@esempio.it">
+                  <label for="newEmail">Email *</label>
+                  <input type="email" id="newEmail" placeholder="operatore@esempio.it" required autocomplete="off">
                 </div>
                 <div class="form-group">
                   <label for="newRole">Ruolo</label>
                   <select id="newRole">
-                    <option value="editor">Editor</option>
-                    <option value="partner">Partner</option>
-                    <option value="admin">Admin</option>
+                    <option value="editor">Editor (Moderazione & Eventi)</option>
+                    <option value="partner">Partner (Gestione Attività & Sponsor)</option>
+                    <option value="admin">Amministratore Completo</option>
                   </select>
                 </div>
               </div>
-              <button type="submit" class="btn-cta" style="width:100%;background:linear-gradient(135deg,var(--accent-secondary),#047857);box-shadow:0 4px 14px rgba(16,185,129,0.4);"><i class="fas fa-plus"></i> Crea Utente</button>
+              <button type="submit" class="btn-cta" style="width:100%;background:linear-gradient(135deg,var(--accent-secondary),#047857);box-shadow:0 4px 14px rgba(16,185,129,0.4);"><i class="fas fa-user-plus"></i> Crea Nuovo Utente</button>
             </form>
           </div>
 
           <div class="sidebar-widget">
-            <h3><i class="fas fa-users-cog"></i> Utenti Registrati</h3>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+              <h3 style="margin-bottom:0;"><i class="fas fa-users-cog"></i> Utenti Registrati & Ruoli</h3>
+              <span style="font-size:0.75rem;color:var(--text-muted);">Gestione credenziali e accessi</span>
+            </div>
             <div id="usersTableContainer" style="overflow-x:auto;"></div>
           </div>
         </div>
@@ -613,29 +658,29 @@
         <div id="panelProfile" class="admin-panel">
           <div class="admin-grid">
             <div class="sidebar-widget">
-              <h3><i class="fas fa-shield-alt" style="color:var(--accent-primary);"></i> Sicurezza Account Amministratore</h3>
-              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">Modifica l'indirizzo email e la password di accesso all'Area Riservata.</p>
+              <h3><i class="fas fa-shield-alt" style="color:var(--accent-primary);"></i> Sicurezza Account Utente</h3>
+              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">Modifica l'indirizzo email e la password di accesso per la sessione corrente.</p>
               
               <div id="adminProfileFeedback" class="hidden" style="padding:0.75rem 1rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600; margin-bottom:1rem;"></div>
 
               <form id="adminProfileForm">
                 <div class="form-group">
                   <label for="adminProfileUsername">Username</label>
-                  <input type="text" id="adminProfileUsername" value="admin1" readonly style="opacity:0.7;cursor:not-allowed;">
+                  <input type="text" id="adminProfileUsername" value="" readonly style="opacity:0.7;cursor:not-allowed;">
                 </div>
                 <div class="form-group">
-                  <label for="adminProfileEmail">Email Amministratore *</label>
-                  <input type="email" id="adminProfileEmail" value="davidgra81@gmail.com" required>
+                  <label for="adminProfileEmail">Email Utente *</label>
+                  <input type="email" id="adminProfileEmail" value="" required>
                   <span style="font-size:0.7rem;color:var(--text-muted);display:block;margin-top:0.25rem;">Email associata alle notifiche e alla gestione del sito.</span>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
-                    <label for="adminProfileNewPass">Nuova Password *</label>
-                    <input type="password" id="adminProfileNewPass" placeholder="••••••••" required>
+                    <label for="adminProfileNewPass">Nuova Password</label>
+                    <input type="password" id="adminProfileNewPass" placeholder="Lascia vuoto per non cambiare">
                   </div>
                   <div class="form-group">
-                    <label for="adminProfileConfirmPass">Conferma Nuova Password *</label>
-                    <input type="password" id="adminProfileConfirmPass" placeholder="••••••••" required>
+                    <label for="adminProfileConfirmPass">Conferma Nuova Password</label>
+                    <input type="password" id="adminProfileConfirmPass" placeholder="Ripeti la nuova password">
                   </div>
                 </div>
                 <button type="submit" class="btn-cta" style="width:100%;margin-top:0.5rem;"><i class="fas fa-save"></i> Salva Modifiche Profilo & Password</button>
@@ -645,12 +690,12 @@
             <div class="sidebar-widget">
               <h3><i class="fas fa-info-circle"></i> Info Credenziali & Accesso</h3>
               <div style="background:var(--bg-tertiary);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;">
-                <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem;">Credenziale attuale impostata:</div>
-                <div style="font-family:monospace;font-size:0.95rem;color:#10b981;font-weight:700;">Username: admin1</div>
-                <div style="font-family:monospace;font-size:0.95rem;color:#fbbf24;font-weight:700;margin-top:0.25rem;">Email: davidgra81@gmail.com</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem;">Sessione attiva collegata:</div>
+                <div id="adminProfileCurrentUsername" style="font-family:monospace;font-size:0.95rem;color:#10b981;font-weight:700;">Username: —</div>
+                <div id="adminProfileCurrentEmail" style="font-family:monospace;font-size:0.95rem;color:#fbbf24;font-weight:700;margin-top:0.25rem;">Email: —</div>
               </div>
               <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.5;">
-                Puoi cambiare la password in qualsiasi momento. La password aggiornata verrà salvata immediatamente e utilizzata per i successivi accessi all'area admin.
+                Puoi aggiornare la password o l'indirizzo email in qualsiasi momento. La nuova configurazione viene salvata e applicata immediatamente a tutti i successivi accessi.
               </p>
             </div>
           </div>
@@ -661,7 +706,7 @@
           <div class="admin-grid">
             <div class="sidebar-widget">
               <h3><i class="fas fa-receipt"></i> Registro Incassi Sponsorizzazioni</h3>
-              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.85rem;">Lista delle transazioni commerciali simulate ricevute tramite il sistema di pagamento.</p>
+              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.85rem;">Registro delle transazioni e sponsorizzazioni ricevute tramite il sistema di pagamento.</p>
               <div style="overflow-x:auto;">
                 <table class="moderation-table" style="font-size:0.75rem;">
                   <thead>
@@ -1146,6 +1191,45 @@
   </div>
 </div>
 
+<!-- MODIFICA UTENTE (Admin) -->
+<div class="modal-overlay" id="editUserModal">
+  <div class="modal-container">
+    <div class="modal-close" onclick="App.closeEditUserModal()"><i class="fas fa-times"></i></div>
+    <div class="modal-body">
+      <h3 class="modal-title"><i class="fas fa-user-edit"></i> Modifica Utente</h3>
+      <div id="editUserFeedback" class="hidden" style="padding:0.6rem 0.8rem; border-radius:var(--radius-sm); font-size:0.82rem; font-weight:600; margin-bottom:1rem;"></div>
+      <form id="editUserForm">
+        <input type="hidden" id="editUserId">
+        <div class="form-group">
+          <label for="editUsername">Username</label>
+          <input type="text" id="editUsername" readonly style="opacity:0.75;cursor:not-allowed;">
+        </div>
+        <div class="form-group">
+          <label for="editUserEmail">Email *</label>
+          <input type="email" id="editUserEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="editUserRole">Ruolo Operativo</label>
+          <select id="editUserRole">
+            <option value="editor">Editor (Moderazione & Eventi)</option>
+            <option value="partner">Partner (Gestione Attività & Sponsor)</option>
+            <option value="admin">Amministratore Completo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editUserPassword">Nuova Password (opzionale)</label>
+          <input type="password" id="editUserPassword" placeholder="Lascia vuoto per mantenere invariata">
+          <span style="font-size:0.72rem;color:var(--text-muted);display:block;margin-top:0.25rem;">Compila solo se desideri reimpostare la password dell'utente (min. 6 caratteri).</span>
+        </div>
+        <div style="display:flex;gap:0.75rem;margin-top:1.25rem;">
+          <button type="submit" class="btn-cta" style="flex:1;"><i class="fas fa-save"></i> Salva Modifiche</button>
+          <button type="button" class="btn-secondary" style="flex:1;" onclick="App.closeEditUserModal()">Annulla</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <!-- CHECKOUT PAGAMENTO -->
 <div class="modal-overlay" id="checkoutPaymentModal">
   <div class="modal-container">
@@ -1204,9 +1288,9 @@
   </div>
 </footer>
 
-<script src="vda-comuni-paths.js?v=9.0"></script>
-<script src="data.js?v=9.0"></script>
-<script src="scraper.js?v=9.0"></script>
-<script src="app.js?v=9.0"></script>
+<script src="vda-comuni-paths.js?v=9.1"></script>
+<script src="data.js?v=9.1"></script>
+<script src="scraper.js?v=9.1"></script>
+<script src="app.js?v=9.1"></script>
 </body>
 </html>

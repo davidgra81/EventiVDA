@@ -383,12 +383,13 @@ const DEFAULT_COMUNI = [
 ];
 
 function initializeStorage() {
-  const CURRENT_SCHEMA = "v10.1";
+  const CURRENT_SCHEMA = "v11.0";
   if (localStorage.getItem("vda_schema_version") !== CURRENT_SCHEMA) {
     localStorage.setItem("vda_events", JSON.stringify(INITIAL_EVENTS));
     localStorage.setItem("vda_sources", JSON.stringify(INITIAL_SOURCES));
     localStorage.setItem("vda_comuni", JSON.stringify(DEFAULT_COMUNI));
     localStorage.setItem("vda_users", JSON.stringify(INITIAL_USERS));
+    localStorage.setItem("vda_payments", JSON.stringify([]));
     localStorage.setItem("vda_schema_version", CURRENT_SCHEMA);
   }
 
@@ -408,12 +409,15 @@ function initializeStorage() {
     localStorage.setItem("vda_comuni", JSON.stringify(DEFAULT_COMUNI));
   }
   if (!localStorage.getItem("vda_payments")) {
-    const defaultPayments = [
-      { id: "pay-01", itemName: "Sponsorizzazione Gold: Marché Vert Noël Aosta", amount: 49, date: "2026-11-01T14:20:00Z", status: "completato", cardBrand: "Visa", last4: "4242" },
-      { id: "pay-02", itemName: "Sponsorizzazione Silver: Alice in ChristmasLand Bard", amount: 19, date: "2026-11-03T09:15:00Z", status: "completato", cardBrand: "MasterCard", last4: "8812" },
-      { id: "pay-03", itemName: "Abbonamento In Evidenza: Baita delle Feste Gressoney", amount: 50, date: "2026-11-05T18:40:00Z", status: "completato", cardBrand: "Visa", last4: "1090" }
-    ];
-    localStorage.setItem("vda_payments", JSON.stringify(defaultPayments));
+    localStorage.setItem("vda_payments", JSON.stringify([]));
+  }
+  if (!localStorage.getItem("vda_analytics")) {
+    localStorage.setItem("vda_analytics", JSON.stringify({
+      totalViews: 0,
+      uniqueVisitors: {},
+      dailyViews: {},
+      eventStats: {}
+    }));
   }
   if (!localStorage.getItem("vda_ads")) {
     const defaultAds = [

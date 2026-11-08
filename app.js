@@ -82,6 +82,109 @@ const App = (() => {
   function getComuni() { try { return JSON.parse(localStorage.getItem("vda_comuni")) || []; } catch(e){ return []; } }
   function saveComuni(arr) { localStorage.setItem("vda_comuni", JSON.stringify(arr)); }
 
+  /* ── REAL ANALYTICS TRACKER ── */
+  function getAnalytics() {
+    try {
+      return JSON.parse(localStorage.getItem("vda_analytics")) || {
+        totalViews: 0,
+        uniqueVisitors: {},
+        dailyViews: {},
+        eventStats: {}
+      };
+    } catch(e) {
+      return { totalViews: 0, uniqueVisitors: {}, dailyViews: {}, eventStats: {} };
+    }
+  }
+  function saveAnalytics(data) {
+    try { localStorage.setItem("vda_analytics", JSON.stringify(data)); } catch(e) {}
+  }
+  function recordPageView() {
+    const data = getAnalytics();
+    data.totalViews = (data.totalViews || 0) + 1;
+    let vid = sessionStorage.getItem("vda_visitor_id");
+    if (!vid) {
+      vid = "v_" + Math.random().toString(36).slice(2, 10);
+      sessionStorage.setItem("vda_visitor_id", vid);
+    }
+    if (!data.uniqueVisitors) data.uniqueVisitors = {};
+    data.uniqueVisitors[vid] = (data.uniqueVisitors[vid] || 0) + 1;
+    const today = getTodayIsoStr();
+    if (!data.dailyViews) data.dailyViews = {};
+    data.dailyViews[today] = (data.dailyViews[today] || 0) + 1;
+    saveAnalytics(data);
+  }
+  function recordEventInteraction(eventId, type) {
+    if (!eventId) return;
+    const data = getAnalytics();
+    if (!data.eventStats) data.eventStats = {};
+    if (!data.eventStats[eventId]) {
+      const ev = getEvents().find(e => e.id === eventId);
+      data.eventStats[eventId] = {
+        views: 0,
+        clicks: 0,
+        title: ev ? ev.title : eventId,
+        location: ev ? ev.location : '',
+        category: ev ? ev.category : ''
+      };
+    }
+    if (type === 'view') data.eventStats[eventId].views = (data.eventStats[eventId].views || 0) + 1;
+    if (type === 'click') data.eventStats[eventId].clicks = (data.eventStats[eventId].clicks || 0) + 1;
+    saveAnalytics(data);
+  }
+
+  /* ── URL SHARING & DEEP LINKING ── */
+  function syncUrlParams() {
+    try {
+      const params = new URLSearchParams();
+      const q = $('eventSearchInput')?.value.trim();
+      const com = _activeComuneFilter || '';
+      const ras = _activeRassegnaFilter || '';
+      const loc = $('eventLocationFilter')?.value || '';
+      const cat = $('eventCategoryFilter')?.value || '';
+      const time = $('eventTimeSlotFilter')?.value || '';
+      const kids = $('eventChildrenFilter')?.checked;
+      if (q) params.set('q', q);
+      if (com) params.set('comune', com);
+      if (ras) params.set('rassegna', ras);
+      if (loc) params.set('zona', loc);
+      if (cat) params.set('cat', cat);
+      if (time) params.set('slot', time);
+      if (kids) params.set('bambini', '1');
+      const qs = params.toString();
+      const newUrl = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+      window.history.replaceState(null, '', newUrl);
+    } catch(e) {}
+  }
+
+  function applyUrlParams() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('q');
+      const com = params.get('comune');
+      const ras = params.get('rassegna');
+      const loc = params.get('zona');
+      const cat = params.get('cat');
+      const time = params.get('slot');
+      const kids = params.get('bambini');
+
+      if (q && $('eventSearchInput')) $('eventSearchInput').value = q;
+      if (loc && $('eventLocationFilter')) $('eventLocationFilter').value = loc;
+      if (cat && $('eventCategoryFilter')) $('eventCategoryFilter').value = cat;
+      if (time && $('eventTimeSlotFilter')) $('eventTimeSlotFilter').value = time;
+      if (kids && $('eventChildrenFilter')) $('eventChildrenFilter').checked = true;
+      if (ras) {
+        _activeRassegnaFilter = ras;
+        if ($('eventRassegnaFilter')) $('eventRassegnaFilter').value = ras;
+      }
+      if (com) {
+        _activeComuneFilter = com;
+        const b = $('activeComuneBadge');
+        const n = $('activeComuneName');
+        if (b && n) { n.textContent = com; b.classList.remove('hidden'); }
+      }
+    } catch(e) {}
+  }
+
   function formatDate(ds) {
     if (!ds) return '';
     const [y,m,d] = ds.split('-');
@@ -842,6 +945,7 @@ const App = (() => {
     else grid.className = 'events-grid';
 
     const filtered = getFilteredEvents();
+    syncUrlParams();
     const countEl = $('eventsResultsCount');
     if (countEl) countEl.textContent = filtered.length + ' attivit' + (filtered.length !== 1 ? 'à' : 'à');
 
@@ -1109,6 +1213,8 @@ const App = (() => {
   function openEventDetail(id) {
     const evt = getEvents().find(e => e.id === id);
     if (!evt) return;
+    recordEventInteraction(id, 'click');
+    try { window.location.hash = 'evento-' + id; } catch(e) {}
     const body = $('eventDetailBody');
     if (!body) return;
     
@@ -1408,20 +1514,23 @@ const App = (() => {
     const username = $('loginUsername')?.value.trim();
     const password = $('loginPassword')?.value;
     const users = getUsers();
-    const match = users.find(u => u.username === username && u.password === password);
+    const match = users.find(u => u.username.toLowerCase() === (username||'').toLowerCase() && u.password === password);
     const errEl = $('loginError');
 
     if (match) {
       _authUser = match;
+      try { sessionStorage.setItem('vda_auth_user', JSON.stringify(match)); } catch(e) {}
       if (errEl) errEl.classList.remove('show');
+      if ($('loginPassword')) $('loginPassword').value = '';
       renderAdminView();
     } else {
-      if (errEl) { errEl.classList.add('show'); setTimeout(()=>errEl.classList.remove('show'), 3000); }
+      if (errEl) { errEl.classList.add('show'); setTimeout(()=>errEl.classList.remove('show'), 3500); }
     }
   }
 
   function handleLogout() {
     _authUser = null;
+    try { sessionStorage.removeItem('vda_auth_user'); } catch(e) {}
     if ($('loginPassword')) $('loginPassword').value = '';
     renderAdminView();
   }
@@ -1452,34 +1561,50 @@ const App = (() => {
     if (panelId === 'panelComuni') renderComuniPanel();
   }
 
-  /* ─── ANALYTICS PANEL ─── */
+  /* ─── REAL ANALYTICS PANEL ─── */
   function renderAnalyticsPanel() {
     const events = getEvents().filter(e => e.status === 'approved');
-    const totalViews = Math.max(14820, events.length * 175);
-    const uniqueUsers = Math.round(totalViews * 0.438);
+    const analytics = getAnalytics();
+    const totalViews = analytics.totalViews || 0;
+    const uniqueUsers = Object.keys(analytics.uniqueVisitors || {}).length;
+
+    let totalClicks = 0;
+    const eventStats = analytics.eventStats || {};
+    Object.values(eventStats).forEach(s => {
+      totalClicks += (s.clicks || 0);
+    });
 
     const totalEl = $('statsTotalViews');
     if (totalEl) totalEl.textContent = totalViews.toLocaleString('it-IT');
     const uniqEl = $('statsUniqueUsers');
     if (uniqEl) uniqEl.textContent = uniqueUsers.toLocaleString('it-IT');
+    const activeEvtsEl = $('statsActiveEvents');
+    if (activeEvtsEl) activeEvtsEl.textContent = events.length.toLocaleString('it-IT');
+    const clicksEl = $('statsTotalClicks');
+    if (clicksEl) clicksEl.textContent = totalClicks.toLocaleString('it-IT');
 
-    // Grafico a barre degli ultimi 7 giorni
+    // Grafico a barre degli ultimi 7 giorni (dati reali)
     const barChart = $('analyticsBarChart');
     if (barChart) {
       const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
       const today = new Date();
       const last7Days = [];
+      const dailyViews = analytics.dailyViews || {};
       for (let i = 6; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(today.getDate() - i);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const isoKey = `${y}-${m}-${day}`;
         const dayName = days[d.getDay()];
-        const visits = Math.round(1800 + Math.sin(i * 1.5) * 600 + (i === 0 ? 850 : 0));
-        last7Days.push({ label: dayName, dateStr: d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }), visits });
+        const visits = dailyViews[isoKey] || 0;
+        last7Days.push({ label: dayName, dateStr: `${day}/${m}`, visits });
       }
-      const maxV = Math.max(...last7Days.map(d => d.visits));
+      const maxV = Math.max(1, ...last7Days.map(d => d.visits));
 
       barChart.innerHTML = last7Days.map((d, idx) => {
-        const hPct = Math.round((d.visits / maxV) * 100);
+        const hPct = d.visits > 0 ? Math.max(12, Math.round((d.visits / maxV) * 100)) : 4;
         const isToday = idx === 6;
         return `
           <div class="bar-col">
@@ -1493,42 +1618,54 @@ const App = (() => {
       }).join('');
     }
 
-    // Top Eventi più visualizzati
+    // Top Eventi reali
     const topTbody = $('analyticsTopEventsBody');
     if (topTbody) {
-      const sortedEvts = [...events].sort((a, b) => (b.importanceScore || 5) - (a.importanceScore || 5)).slice(0, 7);
-      topTbody.innerHTML = sortedEvts.map((ev, i) => {
-        const views = Math.round(850 + (ev.importanceScore || 6) * 220 + (ev.isSponsored ? 450 : 0) - i * 85);
-        const clicks = Math.round(views * 0.38);
-        return `
-          <tr>
-            <td style="font-weight:700;color:var(--text-primary);">
-              <div style="display:flex;align-items:center;gap:0.4rem;">
-                <span style="font-size:0.75rem;opacity:0.6;">#${i + 1}</span>
-                <span>${ev.title}</span>
-              </div>
-            </td>
-            <td><i class="fas fa-map-pin" style="color:var(--accent-primary);margin-right:4px;"></i>${ev.location}</td>
-            <td><span class="bubble-category-tag" style="background:${CATEGORY_COLORS[ev.category]||'var(--accent-primary)'};margin-bottom:0;">${categoryLabel(ev.category)}</span></td>
-            <td style="font-weight:700;color:#38bdf8;">${views.toLocaleString('it-IT')}</td>
-            <td style="font-weight:600;color:#10b981;">${clicks.toLocaleString('it-IT')}</td>
-          </tr>`;
-      }).join('');
+      const trackedList = events.map(ev => {
+        const stat = eventStats[ev.id] || { views: 0, clicks: 0 };
+        return {
+          event: ev,
+          views: stat.views || 0,
+          clicks: stat.clicks || 0
+        };
+      }).sort((a, b) => (b.clicks + b.views) - (a.clicks + a.views)).slice(0, 7);
+
+      topTbody.innerHTML = trackedList.map((item, i) => `
+        <tr>
+          <td style="font-weight:700;color:var(--text-primary);">
+            <div style="display:flex;align-items:center;gap:0.4rem;">
+              <span style="font-size:0.75rem;opacity:0.6;">#${i + 1}</span>
+              <span>${item.event.title}</span>
+            </div>
+          </td>
+          <td><i class="fas fa-map-pin" style="color:var(--accent-primary);margin-right:4px;"></i>${item.event.location}</td>
+          <td><span class="bubble-category-tag" style="background:${CATEGORY_COLORS[item.event.category]||'var(--accent-primary)'};margin-bottom:0;">${categoryLabel(item.event.category)}</span></td>
+          <td style="font-weight:700;color:#38bdf8;">${item.views.toLocaleString('it-IT')}</td>
+          <td style="font-weight:600;color:#10b981;">${item.clicks.toLocaleString('it-IT')}</td>
+        </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:1rem;">Nessun evento ancora registrato.</td></tr>`;
     }
   }
 
   /* ─── PROFILE & SECURITY PANEL ─── */
   function renderProfilePanel() {
+    if (!_authUser) return;
     const users = getUsers();
-    const adminUser = users.find(u => u.username === 'admin1') || _authUser;
+    const currentUser = users.find(u => u.id === _authUser.id || u.username.toLowerCase() === _authUser.username.toLowerCase()) || _authUser;
+
+    const userField = $('adminProfileUsername');
+    if (userField) userField.value = currentUser.username;
     const emailInput = $('adminProfileEmail');
-    if (emailInput && adminUser) {
-      emailInput.value = adminUser.email || 'davidgra81@gmail.com';
-    }
+    if (emailInput) emailInput.value = currentUser.email || '';
+
+    const currUserLabel = $('adminProfileCurrentUsername');
+    if (currUserLabel) currUserLabel.textContent = `Username: ${currentUser.username} (${currentUser.role})`;
+    const currEmailLabel = $('adminProfileCurrentEmail');
+    if (currEmailLabel) currEmailLabel.textContent = `Email: ${currentUser.email || 'Nessuna impostata'}`;
   }
 
   function handleProfileSubmit(e) {
     e.preventDefault();
+    if (!_authUser) return;
     const newEmail = $('adminProfileEmail')?.value.trim();
     const newPass = $('adminProfileNewPass')?.value;
     const confPass = $('adminProfileConfirmPass')?.value;
@@ -1537,50 +1674,47 @@ const App = (() => {
     if (!newEmail) {
       if (fb) {
         fb.className = 'error';
+        fb.style.background = 'rgba(239,68,68,0.15)';
+        fb.style.color = '#ef4444';
         fb.textContent = 'Inserisci un indirizzo email valido.';
         fb.classList.remove('hidden');
       }
       return;
     }
 
-    if (newPass !== confPass) {
-      if (fb) {
-        fb.className = 'error';
-        fb.textContent = 'Le due password inserite non coincidono.';
-        fb.classList.remove('hidden');
+    if (newPass) {
+      if (newPass !== confPass) {
+        if (fb) {
+          fb.className = 'error';
+          fb.style.background = 'rgba(239,68,68,0.15)';
+          fb.style.color = '#ef4444';
+          fb.textContent = 'Le due password inserite non coincidono.';
+          fb.classList.remove('hidden');
+        }
+        return;
       }
-      return;
-    }
-
-    if (newPass.length < 6) {
-      if (fb) {
-        fb.className = 'error';
-        fb.textContent = 'La nuova password deve contenere almeno 6 caratteri.';
-        fb.classList.remove('hidden');
+      if (newPass.length < 6) {
+        if (fb) {
+          fb.className = 'error';
+          fb.style.background = 'rgba(239,68,68,0.15)';
+          fb.style.color = '#ef4444';
+          fb.textContent = 'La nuova password deve contenere almeno 6 caratteri.';
+          fb.classList.remove('hidden');
+        }
+        return;
       }
-      return;
     }
 
     const users = getUsers();
-    const adminIdx = users.findIndex(u => u.username === 'admin1');
-    if (adminIdx !== -1) {
-      users[adminIdx].email = newEmail;
-      users[adminIdx].password = newPass;
+    const idx = users.findIndex(u => u.id === _authUser.id || u.username.toLowerCase() === _authUser.username.toLowerCase());
+    if (idx !== -1) {
+      users[idx].email = newEmail;
+      if (newPass) users[idx].password = newPass;
       saveUsers(users);
-      if (_authUser && _authUser.username === 'admin1') {
-        _authUser.email = newEmail;
-        _authUser.password = newPass;
-      }
-    } else {
-      users.push({
-        id: 'u-01',
-        username: 'admin1',
-        password: newPass,
-        email: newEmail,
-        role: 'admin',
-        createdAt: new Date().toISOString()
-      });
-      saveUsers(users);
+
+      _authUser.email = newEmail;
+      if (newPass) _authUser.password = newPass;
+      try { sessionStorage.setItem('vda_auth_user', JSON.stringify(_authUser)); } catch(e) {}
     }
 
     if (fb) {
@@ -1588,12 +1722,14 @@ const App = (() => {
       fb.style.background = 'rgba(16,185,129,0.15)';
       fb.style.color = '#10b981';
       fb.style.border = '1px solid rgba(16,185,129,0.3)';
-      fb.textContent = `✅ Password e account aggiornati con successo per ${newEmail}!`;
+      fb.textContent = `✅ Profilo e credenziali aggiornati con successo per ${newEmail}!`;
       fb.classList.remove('hidden');
+      setTimeout(() => fb.classList.add('hidden'), 4500);
     }
 
-    $('adminProfileNewPass').value = '';
-    $('adminProfileConfirmPass').value = '';
+    if ($('adminProfileNewPass')) $('adminProfileNewPass').value = '';
+    if ($('adminProfileConfirmPass')) $('adminProfileConfirmPass').value = '';
+    renderProfilePanel();
     renderUsersPanel();
   }
 
@@ -1742,20 +1878,121 @@ const App = (() => {
     container.innerHTML = `
       <table class="users-table">
         <thead><tr>
-          <th>Username</th><th>Ruolo</th><th>Email</th><th>Creato</th><th>Azioni</th>
+          <th>Username</th><th>Ruolo</th><th>Email</th><th>Creato</th><th style="text-align:right;">Azioni</th>
         </tr></thead>
         <tbody>
-          ${users.map(u => `<tr>
-            <td style="font-weight:600;">${u.username}</td>
-            <td><span class="role-badge role-${u.role}">${u.role}</span></td>
-            <td style="font-size:0.78rem;color:var(--text-secondary);">${u.email||'—'}</td>
-            <td style="font-size:0.75rem;color:var(--text-muted);">${u.createdAt ? new Date(u.createdAt).toLocaleDateString('it-IT') : '—'}</td>
-            <td>
-              ${u.username !== 'admin1' ? `<button class="btn-mini btn-mini-delete" onclick="App.deleteUser('${u.id}')"><i class="fas fa-trash"></i> Elimina</button>` : `<span style="font-size:0.7rem;color:var(--text-muted);">Protetto</span>`}
-            </td>
-          </tr>`).join('')}
+          ${users.map(u => {
+            const isSelf = _authUser && (u.id === _authUser.id || u.username.toLowerCase() === _authUser.username.toLowerCase());
+            return `<tr>
+              <td style="font-weight:600;">
+                ${u.username}
+                ${isSelf ? '<span style="font-size:0.65rem;background:rgba(16,185,129,0.2);color:#10b981;padding:1px 5px;border-radius:4px;margin-left:4px;">Tu</span>' : ''}
+              </td>
+              <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+              <td style="font-size:0.78rem;color:var(--text-secondary);">${u.email||'—'}</td>
+              <td style="font-size:0.75rem;color:var(--text-muted);">${u.createdAt ? new Date(u.createdAt).toLocaleDateString('it-IT') : '—'}</td>
+              <td style="text-align:right;white-space:nowrap;">
+                <button class="btn-mini btn-mini-edit" onclick="App.openEditUser('${u.id}')" title="Modifica email, ruolo o password"><i class="fas fa-edit"></i> Modifica</button>
+                ${!isSelf ? `
+                  <button class="btn-mini btn-mini-delete" onclick="App.deleteUser('${u.id}')" title="Elimina utente"><i class="fas fa-trash"></i> Elimina</button>
+                ` : `
+                  <span style="font-size:0.7rem;color:var(--text-muted);margin-left:6px;">In uso</span>
+                `}
+              </td>
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>`;
+  }
+
+  function showUserFeedback(msg, type = 'success') {
+    const fb = $('usersFeedback');
+    if (!fb) return;
+    fb.textContent = msg;
+    fb.className = type;
+    if (type === 'success') {
+      fb.style.background = 'rgba(16,185,129,0.15)';
+      fb.style.color = '#10b981';
+      fb.style.border = '1px solid rgba(16,185,129,0.3)';
+    } else {
+      fb.style.background = 'rgba(239,68,68,0.15)';
+      fb.style.color = '#ef4444';
+      fb.style.border = '1px solid rgba(239,68,68,0.3)';
+    }
+    fb.classList.remove('hidden');
+    setTimeout(() => fb.classList.add('hidden'), 4000);
+  }
+
+  function openEditUser(id) {
+    const users = getUsers();
+    const u = users.find(item => item.id === id);
+    if (!u) return;
+    if ($('editUserId')) $('editUserId').value = u.id;
+    if ($('editUsername')) $('editUsername').value = u.username;
+    if ($('editUserEmail')) $('editUserEmail').value = u.email || '';
+    if ($('editUserRole')) $('editUserRole').value = u.role || 'editor';
+    if ($('editUserPassword')) $('editUserPassword').value = '';
+    const fb = $('editUserFeedback');
+    if (fb) fb.classList.add('hidden');
+    openModal('editUserModal');
+  }
+
+  function closeEditUserModal() {
+    closeModal('editUserModal');
+  }
+
+  function saveEditUser(e) {
+    if (e) e.preventDefault();
+    const id = $('editUserId')?.value;
+    const email = $('editUserEmail')?.value.trim();
+    const role = $('editUserRole')?.value;
+    const newPass = $('editUserPassword')?.value;
+    const fb = $('editUserFeedback');
+
+    if (!email) {
+      if (fb) {
+        fb.textContent = 'Inserisci un indirizzo email valido.';
+        fb.style.background = 'rgba(239,68,68,0.15)';
+        fb.style.color = '#ef4444';
+        fb.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (newPass && newPass.length < 6) {
+      if (fb) {
+        fb.textContent = 'La nuova password deve contenere almeno 6 caratteri.';
+        fb.style.background = 'rgba(239,68,68,0.15)';
+        fb.style.color = '#ef4444';
+        fb.classList.remove('hidden');
+      }
+      return;
+    }
+
+    const users = getUsers();
+    const idx = users.findIndex(u => u.id === id);
+    if (idx === -1) return;
+
+    users[idx].email = email;
+    users[idx].role = role;
+    if (newPass) {
+      users[idx].password = newPass;
+    }
+    saveUsers(users);
+
+    if (_authUser && (_authUser.id === id || _authUser.username.toLowerCase() === users[idx].username.toLowerCase())) {
+      _authUser.email = email;
+      _authUser.role = role;
+      if (newPass) _authUser.password = newPass;
+      try { sessionStorage.setItem('vda_auth_user', JSON.stringify(_authUser)); } catch(e) {}
+      const el = $('adminLoggedUser');
+      if (el) el.textContent = `${_authUser.username} (${_authUser.role})`;
+    }
+
+    closeEditUserModal();
+    renderUsersPanel();
+    renderProfilePanel();
+    showUserFeedback(`Utente "${users[idx].username}" aggiornato con successo!`, 'success');
   }
 
   /* ══════════════════════════════
@@ -1836,10 +2073,27 @@ const App = (() => {
   }
 
   function deleteUser(id) {
-    if (!confirm('Eliminare questo utente?')) return;
-    const users = getUsers().filter(u => u.id !== id);
-    saveUsers(users);
+    const users = getUsers();
+    const u = users.find(item => item.id === id);
+    if (!u) return;
+
+    if (_authUser && (_authUser.id === id || _authUser.username.toLowerCase() === u.username.toLowerCase())) {
+      alert('Non puoi eliminare l\'utente con cui sei attualmente connesso.');
+      return;
+    }
+
+    const admins = users.filter(item => item.role === 'admin' && item.id !== id);
+    if (u.role === 'admin' && admins.length === 0) {
+      alert('Impossibile eliminare l\'unico account amministratore attivo.');
+      return;
+    }
+
+    if (!confirm(`Sei sicuro di voler eliminare definitivamente l'utente "${u.username}"?`)) return;
+
+    const remaining = users.filter(item => item.id !== id);
+    saveUsers(remaining);
     renderUsersPanel();
+    showUserFeedback(`Utente "${u.username}" eliminato con successo.`, 'success');
   }
 
   function populateComuniDropdown(selectId, selectedVal) {
@@ -2515,14 +2769,46 @@ const App = (() => {
      MODAL HELPERS
   ══════════════════════════════ */
   function openModal(id) { $(id)?.classList.add('active'); }
-  function closeModal(id) { $(id)?.classList.remove('active'); }
+  function closeModal(id) {
+    const el = $(id);
+    if (!el) return;
+    el.classList.remove('active');
+    if (id === 'eventDetailModal' && window.location.hash.startsWith('#evento-')) {
+      try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {}
+    }
+  }
 
   function initModals() {
     $$('.modal-close').forEach(btn => {
-      btn.addEventListener('click', () => btn.closest('.modal-overlay')?.classList.remove('active'));
+      btn.addEventListener('click', () => {
+        const modal = btn.closest('.modal-overlay');
+        if (modal) {
+          modal.classList.remove('active');
+          if (modal.id === 'eventDetailModal' && window.location.hash.startsWith('#evento-')) {
+            try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {}
+          }
+        }
+      });
     });
     $$('.modal-overlay').forEach(overlay => {
-      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('active'); });
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+          if (overlay.id === 'eventDetailModal' && window.location.hash.startsWith('#evento-')) {
+            try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {}
+          }
+        }
+      });
+    });
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        $$('.modal-overlay.active').forEach(m => {
+          m.classList.remove('active');
+          if (m.id === 'eventDetailModal' && window.location.hash.startsWith('#evento-')) {
+            try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {}
+          }
+        });
+      }
     });
   }
 
@@ -2550,8 +2836,22 @@ const App = (() => {
      INIT
   ══════════════════════════════ */
   function init() {
+    // 1. Session persistence check
+    try {
+      const saved = sessionStorage.getItem('vda_auth_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        const found = getUsers().find(item => item.id === u.id || item.username.toLowerCase() === (u.username||'').toLowerCase());
+        if (found) _authUser = found;
+      }
+    } catch(e) {}
+
+    // 2. Real visitor analytics tracking
+    recordPageView();
+
     initTheme();
     initMap();
+    applyUrlParams();
     initFilters();
     initTimeSlider();
     initModals();
@@ -2559,6 +2859,12 @@ const App = (() => {
     initCardPreview();
     renderEvents();
     renderSidebarAds();
+
+    // Deep link open event
+    if (window.location.hash.startsWith('#evento-')) {
+      const hashId = window.location.hash.replace('#evento-', '');
+      setTimeout(() => openEventDetail(hashId), 250);
+    }
 
     // Comune change handlers for autocalculating areas in edit/add event modals
     handleComuneChange('editEvtLocation', 'editEvtArea');
@@ -2573,6 +2879,10 @@ const App = (() => {
 
     // Login / logout
     $('btnLogin')?.addEventListener('click', handleLogin);
+    $('adminLoginForm')?.addEventListener('submit', e => {
+      e.preventDefault();
+      handleLogin();
+    });
     $('loginPassword')?.addEventListener('keydown', e => { if(e.key==='Enter') handleLogin(); });
     $('btnLogout')?.addEventListener('click', handleLogout);
 
@@ -2628,26 +2938,43 @@ const App = (() => {
     // Scraper button
     $('btnRunScraper')?.addEventListener('click', runScraper);
 
+    // Edit User modal form
+    $('editUserForm')?.addEventListener('submit', saveEditUser);
+
     // Add User form
     $('addUserForm')?.addEventListener('submit', e => {
       e.preventDefault();
       const users = getUsers();
       const username = $('newUsername').value.trim();
-      if (users.find(u => u.username === username)) {
-        alert(`Username "${username}" già esistente.`);
+      const password = $('newPassword').value;
+      const email = $('newEmail').value.trim();
+      const role = $('newRole').value;
+
+      if (!username) {
+        showUserFeedback('Inserisci uno username valido.', 'error');
         return;
       }
+      if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+        showUserFeedback(`Username "${username}" già esistente. Scegline un altro.`, 'error');
+        return;
+      }
+      if (!password || password.length < 6) {
+        showUserFeedback('La password deve contenere almeno 6 caratteri.', 'error');
+        return;
+      }
+
       users.push({
         id: genId('u'),
         username,
-        password: $('newPassword').value,
-        email: $('newEmail').value.trim(),
-        role: $('newRole').value,
+        password,
+        email,
+        role,
         createdAt: new Date().toISOString()
       });
       saveUsers(users);
       e.target.reset();
       renderUsersPanel();
+      showUserFeedback(`Utente "${username}" creato con successo!`, 'success');
     });
 
     // Edit event save buttons
@@ -2667,7 +2994,7 @@ const App = (() => {
     $('adminProfileForm')?.addEventListener('submit', handleProfileSubmit);
 
     // Avvio automatico della cattura eventi reali VdA in background all'apertura del portale
-    autoSyncRealEventsOnBoot();
+    autoSyncRealEventsOnBoot().catch(() => {});
   }
 
   return {
@@ -2696,6 +3023,11 @@ const App = (() => {
     runSourceDiscovery,
     runScraper,
     deleteUser,
+    openEditUser,
+    closeEditUserModal,
+    saveEditUser,
+    handleLogin,
+    handleLogout,
     openAddEvent,
     saveAddEvent,
     promoteEvent,
